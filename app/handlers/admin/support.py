@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from aiogram import Router
+from aiogram import (
+    Router,
+    F,
+)
 
 from aiogram.types import (
     Message,
@@ -18,13 +21,16 @@ from app.database.repositories.support import (
 router = Router()
 
 
-@router.message()
+# =========================
+# USER -> ADMIN
+# =========================
+
+@router.message(
+    F.chat.type == "private"
+)
 async def forward_user_message(
     message: Message,
 ):
-
-    if message.chat.type != "private":
-        return
 
     if not message.from_user:
         return
@@ -58,7 +64,13 @@ async def forward_user_message(
             )
 
 
-@router.message()
+# =========================
+# ADMIN -> USER
+# =========================
+
+@router.message(
+    F.chat.type == "private"
+)
 async def admin_reply_handler(
     message: Message,
 ):
