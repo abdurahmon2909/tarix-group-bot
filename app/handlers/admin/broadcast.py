@@ -185,7 +185,7 @@ async def toggle_group(
 
     keyboard.append([
         InlineKeyboardButton(
-            text="✅ Davom etish",
+            text="✅ Tanlanganlarga yuborish",
             callback_data=(
                 "broadcast_continue"
             ),
