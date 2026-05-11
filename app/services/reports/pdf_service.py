@@ -46,14 +46,14 @@ from datetime import datetime
 pdfmetrics.registerFont(
     TTFont(
         "DejaVu",
-        "DejaVuSans.ttf",
+        "assets/DejaVuSans.ttf",
     )
 )
 
 pdfmetrics.registerFont(
     TTFont(
         "DejaVu-Bold",
-        "DejaVuSans.ttf",
+        "assets/DejaVuSans.ttf",
     )
 )
 
