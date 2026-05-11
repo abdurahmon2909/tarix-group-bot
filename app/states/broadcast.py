@@ -8,4 +8,6 @@ class BroadcastStates(
     StatesGroup
 ):
 
+    selecting_groups = State()
+
     waiting_for_post = State()

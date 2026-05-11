@@ -20,6 +20,10 @@ from app.utils.admin import (
     is_admin,
 )
 
+from app.utils.admin_menu import (
+    return_to_admin,
+)
+
 from app.states.broadcast import (
     BroadcastStates,
 )
@@ -51,12 +55,193 @@ async def broadcast_menu(
     ):
         return
 
+    groups = await get_active_groups()
+
+    if not groups:
+
+        await callback.answer(
+            "Faol guruh yo'q",
+            show_alert=True,
+        )
+
+        return
+
+    await state.set_state(
+        BroadcastStates.selecting_groups
+    )
+
+    await state.update_data(
+        selected_groups=[]
+    )
+
+    keyboard = []
+
+    for group in groups:
+
+        keyboard.append([
+            InlineKeyboardButton(
+                text=f"⬜️ {group.title}",
+                callback_data=(
+                    f"toggle_broadcast_group:"
+                    f"{group.telegram_chat_id}"
+                ),
+            )
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="✅ Davom etish",
+            callback_data=(
+                "broadcast_continue"
+            ),
+        )
+    ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="⬅️ Orqaga",
+            callback_data="admin_back",
+        )
+    ])
+
+    await callback.message.edit_text(
+        "📢 Broadcast uchun guruhlarni tanlang:",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=keyboard
+        ),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# TOGGLE GROUP
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "toggle_broadcast_group:"
+    )
+)
+async def toggle_group(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    data = await state.get_data()
+
+    selected_groups = data.get(
+        "selected_groups",
+        [],
+    )
+
+    group_id = int(
+        callback.data.split(":")[1]
+    )
+
+    if group_id in selected_groups:
+
+        selected_groups.remove(
+            group_id
+        )
+
+    else:
+
+        selected_groups.append(
+            group_id
+        )
+
+    await state.update_data(
+        selected_groups=selected_groups
+    )
+
+    groups = await get_active_groups()
+
+    keyboard = []
+
+    for group in groups:
+
+        checked = (
+            "☑️"
+            if (
+                group.telegram_chat_id
+                in selected_groups
+            )
+            else "⬜️"
+        )
+
+        keyboard.append([
+            InlineKeyboardButton(
+                text=(
+                    f"{checked} "
+                    f"{group.title}"
+                ),
+                callback_data=(
+                    f"toggle_broadcast_group:"
+                    f"{group.telegram_chat_id}"
+                ),
+            )
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="✅ Davom etish",
+            callback_data=(
+                "broadcast_continue"
+            ),
+        )
+    ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="⬅️ Orqaga",
+            callback_data="admin_back",
+        )
+    ])
+
+    await callback.message.edit_reply_markup(
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=keyboard
+        )
+    )
+
+    await callback.answer()
+
+
+# =========================
+# CONTINUE
+# =========================
+
+@router.callback_query(
+    F.data == "broadcast_continue"
+)
+async def broadcast_continue(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    data = await state.get_data()
+
+    selected_groups = data.get(
+        "selected_groups",
+        [],
+    )
+
+    if not selected_groups:
+
+        await callback.answer(
+            "Kamida 1 ta guruh tanlang",
+            show_alert=True,
+        )
+
+        return
+
     await state.set_state(
         BroadcastStates.waiting_for_post
     )
 
     await callback.message.edit_text(
-        "📢 Faol guruhlarga yuboriladigan postni yuboring"
+        "📢 Endi post yuboring"
     )
 
     await callback.answer()
@@ -98,12 +283,6 @@ async def receive_post(
                         "cancel_broadcast"
                     ),
                 ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="⬅️ Orqaga",
-                    callback_data="admin_back",
-                )
             ]
         ]
     )
@@ -132,6 +311,10 @@ async def cancel_broadcast(
         "❌ Broadcast bekor qilindi"
     )
 
+    await return_to_admin(
+        callback
+    )
+
     await callback.answer()
 
 
@@ -147,14 +330,6 @@ async def confirm_broadcast(
     state: FSMContext,
 ):
 
-    if not callback.from_user:
-        return
-
-    if not is_admin(
-        callback.from_user.id
-    ):
-        return
-
     data = await state.get_data()
 
     post_message_id = data.get(
@@ -165,9 +340,22 @@ async def confirm_broadcast(
         "post_chat_id"
     )
 
+    selected_groups = data.get(
+        "selected_groups",
+        [],
+    )
+
     groups = await get_active_groups()
 
-    total = len(groups)
+    target_groups = [
+        g for g in groups
+        if (
+            g.telegram_chat_id
+            in selected_groups
+        )
+    ]
+
+    total = len(target_groups)
 
     success = 0
 
@@ -181,7 +369,7 @@ async def confirm_broadcast(
     )
 
     for idx, group in enumerate(
-        groups,
+        target_groups,
         start=1,
     ):
 
@@ -209,10 +397,8 @@ async def confirm_broadcast(
                 f"Broadcast error: {e}"
             )
 
-        # anti flood
         await asyncio.sleep(0.05)
 
-        # progress update
         if idx % 5 == 0:
 
             try:
@@ -235,5 +421,9 @@ async def confirm_broadcast(
     )
 
     await state.clear()
+
+    await return_to_admin(
+        callback
+    )
 
     await callback.answer()
