@@ -92,9 +92,7 @@ async def get_stats_for_hours(
     hours: int,
 ):
 
-    end_dt = datetime.now(
-        timezone.utc
-    )
+    end_dt = datetime.utcnow()
 
     start_dt = end_dt - timedelta(
         hours=hours

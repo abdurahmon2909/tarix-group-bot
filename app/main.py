@@ -38,7 +38,6 @@ from app.handlers.groups import (
     tracker_router,
     auto_detect_router,
 )
-
 # =========================
 # LOGGING
 # =========================
