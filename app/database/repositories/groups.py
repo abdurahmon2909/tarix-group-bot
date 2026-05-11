@@ -65,6 +65,20 @@ async def get_active_groups():
 
 
 # =========================
+# GET ACTIVE GROUP IDS
+# =========================
+
+async def get_active_group_ids():
+
+    groups = await get_active_groups()
+
+    return [
+        group.telegram_chat_id
+        for group in groups
+    ]
+
+
+# =========================
 # ACTIVATE GROUP
 # =========================
 
@@ -116,16 +130,3 @@ async def is_group_active(
             return False
 
         return group.is_active
-
-# =========================
-# ACTIVE GROUP IDS
-# =========================
-
-async def get_active_group_ids():
-
-    groups = await get_active_groups()
-
-    return [
-        group.telegram_chat_id
-        for group in groups
-    ]
