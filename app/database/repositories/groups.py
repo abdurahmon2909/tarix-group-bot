@@ -149,3 +149,23 @@ async def create_group_if_not_exists(
         session.add(new_group)
 
         await session.commit()
+
+async def is_group_active(
+    telegram_chat_id: int,
+) -> bool:
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Group).where(
+                Group.telegram_chat_id
+                == telegram_chat_id
+            )
+        )
+
+        group = result.scalar_one_or_none()
+
+        if not group:
+            return False
+
+        return group.is_active
