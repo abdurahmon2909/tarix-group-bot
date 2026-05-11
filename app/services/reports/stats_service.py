@@ -9,7 +9,7 @@ from datetime import (
 )
 
 from app.database.repositories.messages import (
-    get_messages_between,
+    get_messages_in_range,
 )
 
 
@@ -32,7 +32,7 @@ async def build_stats(
     end_dt: datetime,
 ):
 
-    messages = await get_messages_between(
+    messages = await get_messages_in_range(
         chat_id=chat_id,
         start_dt=start_dt,
         end_dt=end_dt,
