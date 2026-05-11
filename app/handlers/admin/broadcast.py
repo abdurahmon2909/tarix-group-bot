@@ -90,7 +90,7 @@ async def broadcast_menu(
 
     keyboard.append([
         InlineKeyboardButton(
-            text="✅ Davom etish",
+            text="Tanlanganlarga yuborish",
             callback_data=(
                 "broadcast_continue"
             ),
