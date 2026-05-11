@@ -40,3 +40,21 @@ async def admin_panel(
         "👋 Admin panel",
         reply_markup=admin_main_menu(),
     )
+
+@router.callback_query(
+    F.data == "admin_back"
+)
+async def admin_back_handler(
+    callback: CallbackQuery,
+):
+
+    from app.keyboards.admin import (
+        admin_main_menu,
+    )
+
+    await callback.message.edit_text(
+        "👋 Admin panel",
+        reply_markup=admin_main_menu(),
+    )
+
+    await callback.answer()
