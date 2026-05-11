@@ -130,3 +130,19 @@ async def is_group_active(
             return False
 
         return group.is_active
+
+# =========================
+# PENDING GROUPS
+# =========================
+
+async def get_pending_groups():
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Group).where(
+                Group.is_active == False
+            )
+        )
+
+        return result.scalars().all()
