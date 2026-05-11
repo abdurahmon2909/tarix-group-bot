@@ -1,12 +1,9 @@
-from __future__ import annotations
-
-import asyncio
-
 from app.database.db import engine
 from app.database.base import Base
 
-# MODELS IMPORT
 from app.database.models import *
+
+import asyncio
 
 
 async def init_models():
