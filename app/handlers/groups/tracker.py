@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from aiogram import Router
-from aiogram.types import Message
 
-from app.services.groups.cache import (
+from aiogram.types import (
+    Message,
+)
+
+from app.database.repositories.groups import (
     is_group_active,
 )
 
-from app.services.messages.message_service import (
+from app.database.repositories.messages import (
     save_group_message,
 )
 
@@ -25,9 +28,21 @@ async def track_group_messages(
     ]:
         return
 
-    if not is_group_active(
+    print(
+        "GROUP MESSAGE:",
+        message.text,
+    )
+
+    active = await is_group_active(
         message.chat.id
-    ):
+    )
+
+    print(
+        "GROUP ACTIVE:",
+        active,
+    )
+
+    if not active:
         return
 
     if not message.from_user:
@@ -35,10 +50,22 @@ async def track_group_messages(
 
     await save_group_message(
         chat_id=message.chat.id,
-        telegram_message_id=message.message_id,
-        telegram_user_id=message.from_user.id,
-        full_name=message.from_user.full_name,
-        username=message.from_user.username,
-        text=message.text,
+        telegram_message_id=(
+            message.message_id
+        ),
+        telegram_user_id=(
+            message.from_user.id
+        ),
+        full_name=(
+            message.from_user.full_name
+        ),
+        username=(
+            message.from_user.username
+        ),
+        text=message.text or "",
         sent_at=message.date,
+    )
+
+    print(
+        "MESSAGE SAVED"
     )
