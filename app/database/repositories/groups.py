@@ -120,3 +120,32 @@ async def get_group_title(
         title = result.scalar_one_or_none()
 
         return title or "Noma'lum guruh"
+
+async def create_group_if_not_exists(
+    telegram_chat_id: int,
+    title: str,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Group).where(
+                Group.telegram_chat_id
+                == telegram_chat_id
+            )
+        )
+
+        group = result.scalar_one_or_none()
+
+        if group:
+            return
+
+        new_group = Group(
+            telegram_chat_id=telegram_chat_id,
+            title=title,
+            is_active=False,
+        )
+
+        session.add(new_group)
+
+        await session.commit()

@@ -1,30 +1,29 @@
 from __future__ import annotations
 
 from aiogram import Router
-from aiogram.types import ChatMemberUpdated
+from aiogram.types import (
+    Message,
+)
 
-from app.services.groups.group_service import (
-    auto_register_group,
+from app.database.repositories.groups import (
+    create_group_if_not_exists,
 )
 
 router = Router()
 
 
-@router.my_chat_member()
-async def bot_added_to_group(
-    event: ChatMemberUpdated,
+@router.message()
+async def detect_new_group(
+    message: Message,
 ):
 
-    chat = event.chat
-
-    if chat.type not in [
+    if message.chat.type not in [
         "group",
         "supergroup",
     ]:
         return
 
-    await auto_register_group(
-        telegram_chat_id=chat.id,
-        title=chat.title or "Noma'lum guruh",
-        username=chat.username,
+    await create_group_if_not_exists(
+        telegram_chat_id=message.chat.id,
+        title=message.chat.title or "Noma'lum",
     )
