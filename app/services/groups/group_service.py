@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from app.database.repositories.groups import (
-    create_group,
-    get_group_by_chat_id,
+    create_group_if_not_exists,
     get_pending_groups,
     activate_group,
 )
@@ -14,18 +13,9 @@ async def auto_register_group(
     username: str | None = None,
 ):
 
-    existing = await get_group_by_chat_id(
-        telegram_chat_id
-    )
-
-    if existing:
-        return existing
-
-    return await create_group(
+    await create_group_if_not_exists(
         telegram_chat_id=telegram_chat_id,
         title=title,
-        username=username,
-        is_active=False,
     )
 
 
@@ -38,4 +28,6 @@ async def approve_group(
     group_id: int,
 ):
 
-    await activate_group(group_id)
+    await activate_group(
+        group_id
+    )
