@@ -1,0 +1,8 @@
+aiogram==3.21.0
+sqlalchemy==2.0.41
+asyncpg==0.30.0
+alembic==1.16.2
+reportlab==4.2.2
+greenlet==3.2.3
+reportlab==4.2.2
+pillow==11.2.1
