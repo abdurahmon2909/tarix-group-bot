@@ -67,7 +67,9 @@ async def track_group_messages(
                 message.from_user.username
             ),
             text=message.text or "",
-            sent_at=message.date,
+            sent_at=message.date.replace(
+                tzinfo=None
+            ),
         )
 
         print(
