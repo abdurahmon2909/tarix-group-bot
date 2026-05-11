@@ -22,6 +22,8 @@ async def track_group_messages(
     message: Message,
 ):
 
+    print("TRACKER HIT")
+
     if message.chat.type not in [
         "group",
         "supergroup",
@@ -48,24 +50,33 @@ async def track_group_messages(
     if not message.from_user:
         return
 
-    await save_group_message(
-        chat_id=message.chat.id,
-        telegram_message_id=(
-            message.message_id
-        ),
-        telegram_user_id=(
-            message.from_user.id
-        ),
-        full_name=(
-            message.from_user.full_name
-        ),
-        username=(
-            message.from_user.username
-        ),
-        text=message.text or "",
-        sent_at=message.date,
-    )
+    try:
 
-    print(
-        "MESSAGE SAVED"
-    )
+        await save_group_message(
+            chat_id=message.chat.id,
+            telegram_message_id=(
+                message.message_id
+            ),
+            telegram_user_id=(
+                message.from_user.id
+            ),
+            full_name=(
+                message.from_user.full_name
+            ),
+            username=(
+                message.from_user.username
+            ),
+            text=message.text or "",
+            sent_at=message.date,
+        )
+
+        print(
+            "MESSAGE SAVED"
+        )
+
+    except Exception as e:
+
+        print(
+            "SAVE ERROR:",
+            e,
+        )
