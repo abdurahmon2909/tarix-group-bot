@@ -74,10 +74,21 @@ dp.update.middleware(
 # ROUTERS
 # =========================
 
+# TRACKER FIRST
+dp.include_router(
+    tracker_router
+)
+
+dp.include_router(
+    auto_detect_router
+)
+
+# USERS
 dp.include_router(
     start_router
 )
 
+# ADMIN
 dp.include_router(
     panel_router
 )
@@ -94,14 +105,7 @@ dp.include_router(
     broadcast_router
 )
 
-dp.include_router(
-    auto_detect_router
-)
-
-dp.include_router(
-    tracker_router
-)
-
+# SUPPORT LAST
 dp.include_router(
     support_router
 )
