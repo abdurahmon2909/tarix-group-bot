@@ -4,7 +4,7 @@ from aiogram import Router
 from aiogram.filters import Command
 
 from aiogram.types import Message
-
+from aiogram import F
 from app.keyboards.admin import (
     admin_main_menu,
 )
