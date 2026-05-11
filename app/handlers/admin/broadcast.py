@@ -24,8 +24,8 @@ from app.states.broadcast import (
     BroadcastStates,
 )
 
-from app.database.repositories.users import (
-    get_all_users,
+from app.database.repositories.groups import (
+    get_active_groups,
 )
 
 router = Router()
@@ -56,7 +56,7 @@ async def broadcast_menu(
     )
 
     await callback.message.edit_text(
-        "📢 Yuboriladigan postni yuboring"
+        "📢 Faol guruhlarga yuboriladigan postni yuboring"
     )
 
     await callback.answer()
@@ -98,6 +98,12 @@ async def receive_post(
                         "cancel_broadcast"
                     ),
                 ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text="⬅️ Orqaga",
+                    callback_data="admin_back",
+                )
             ]
         ]
     )
@@ -141,6 +147,14 @@ async def confirm_broadcast(
     state: FSMContext,
 ):
 
+    if not callback.from_user:
+        return
+
+    if not is_admin(
+        callback.from_user.id
+    ):
+        return
+
     data = await state.get_data()
 
     post_message_id = data.get(
@@ -151,9 +165,9 @@ async def confirm_broadcast(
         "post_chat_id"
     )
 
-    users = await get_all_users()
+    groups = await get_active_groups()
 
-    total = len(users)
+    total = len(groups)
 
     success = 0
 
@@ -166,28 +180,40 @@ async def confirm_broadcast(
         )
     )
 
-    for idx, user in enumerate(
-        users,
+    for idx, group in enumerate(
+        groups,
         start=1,
     ):
 
         try:
 
             await callback.bot.copy_message(
-                chat_id=user.telegram_id,
-                from_chat_id=post_chat_id,
-                message_id=post_message_id,
+                chat_id=(
+                    group.telegram_chat_id
+                ),
+                from_chat_id=(
+                    post_chat_id
+                ),
+                message_id=(
+                    post_message_id
+                ),
             )
 
             success += 1
 
-        except Exception:
+        except Exception as e:
 
             failed += 1
 
-        await asyncio.sleep(0.03)
+            print(
+                f"Broadcast error: {e}"
+            )
 
-        if idx % 25 == 0:
+        # anti flood
+        await asyncio.sleep(0.05)
+
+        # progress update
+        if idx % 5 == 0:
 
             try:
 
@@ -203,7 +229,7 @@ async def confirm_broadcast(
 
     await progress_message.edit_text(
         f"✅ Broadcast tugadi\n\n"
-        f"👥 Jami: {total}\n"
+        f"📢 Guruhlar: {total}\n"
         f"✅ Yuborildi: {success}\n"
         f"❌ Xato: {failed}"
     )
