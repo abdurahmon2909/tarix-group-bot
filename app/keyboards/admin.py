@@ -16,8 +16,8 @@ def admin_main_menu():
             ],
             [
                 InlineKeyboardButton(
-                    text="➕ Add Group",
-                    callback_data="add_group",
+                    text="📂 Guruhlar",
+                    callback_data="groups_menu",
                 )
             ],
             [

@@ -8,7 +8,9 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
-
+from app.database.repositories.groups import (
+    get_all_groups,
+)
 from app.database.repositories.groups import (
     get_pending_groups,
 )
@@ -20,7 +22,9 @@ from app.services.groups.group_service import (
 from app.utils.admin import (
     is_admin,
 )
-
+from aiogram.utils.keyboard import (
+    InlineKeyboardBuilder,
+)
 router = Router()
 
 
@@ -118,3 +122,76 @@ async def approve_group_handler(
     await callback.message.edit_text(
         "✅ Guruh aktiv qilindi"
     )
+@router.callback_query(
+    F.data == "groups_menu"
+)
+async def groups_menu(
+    callback: CallbackQuery,
+):
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📋 Ro‘yxat",
+        callback_data="groups_list",
+    )
+
+    kb.button(
+        text="➕ Qo‘shish",
+        callback_data="add_group",
+    )
+
+    kb.button(
+        text="❌ O‘chirish",
+        callback_data="delete_group_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "📂 Guruhlar bo‘limi",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+@router.callback_query(
+    F.data == "groups_list"
+)
+async def groups_list(
+    callback: CallbackQuery,
+):
+
+    groups = await get_all_groups()
+
+    if not groups:
+
+        await callback.message.edit_text(
+            "Guruhlar topilmadi."
+        )
+
+        return
+
+    text = "📋 Guruhlar ro‘yxati:\n\n"
+
+    for idx, group in enumerate(
+        groups,
+        start=1,
+    ):
+
+        status = (
+            "✅"
+            if group.is_active
+            else "❌"
+        )
+
+        text += (
+            f"{idx}. {status} "
+            f"{group.title}\n"
+        )
+
+    await callback.message.edit_text(
+        text
+    )
+
+    await callback.answer()

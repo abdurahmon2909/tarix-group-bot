@@ -147,3 +147,12 @@ async def is_group_active(
             return False
 
         return group.is_active
+async def get_all_groups():
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Group)
+        )
+
+        return result.scalars().all()
