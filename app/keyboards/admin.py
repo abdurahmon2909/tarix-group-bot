@@ -4,20 +4,20 @@ from aiogram.types import (
 )
 
 
-def admin_main_menu():
+def admin_panel_keyboard():
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="📊 Reports",
-                    callback_data="reports_menu",
+                    text="📂 Guruhlar",
+                    callback_data="groups_menu",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="📂 Guruhlar",
-                    callback_data="groups_menu",
+                    text="📊 Report",
+                    callback_data="reports_menu",
                 )
             ],
             [

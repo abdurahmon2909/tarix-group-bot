@@ -9,7 +9,9 @@ from aiogram.types import (
     Message,
     CallbackQuery,
 )
-
+from app.keyboards.admin import (
+    admin_panel_keyboard,
+)
 from aiogram.filters import CommandStart
 
 from aiogram.fsm.context import FSMContext
@@ -67,11 +69,10 @@ async def start_handler(
     )
 
     if has_fullname:
-
         await message.answer(
-            "✅ Bot ishlashga tayyor."
+            "⚙️ Admin panel",
+            reply_markup=admin_panel_keyboard(),
         )
-
         return
 
     await state.set_state(
