@@ -560,3 +560,7 @@ async def receive_end_date(
     )
 
     await state.clear()
+    await callback.message.answer(
+        "⚙️ Admin panel",
+        reply_markup=admin_main_menu(),
+    )
