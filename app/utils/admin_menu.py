@@ -3,7 +3,7 @@ from app.keyboards.admin import (
 )
 
 
-async def send_admin_menu(
+async def return_to_admin(
     message,
 ):
 
