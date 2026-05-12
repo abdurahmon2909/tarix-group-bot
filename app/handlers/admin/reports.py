@@ -422,34 +422,7 @@ async def manual_group_selected(
         "manual_group:"
     )
 )
-async def manual_group_selected(
-    callback: CallbackQuery,
-    state: FSMContext,
-):
 
-    group_id = int(
-        callback.data.split(":")[1]
-    )
-
-    await state.update_data(
-        report_group_id=group_id
-    )
-
-    await state.set_state(
-        ManualReportStates.waiting_for_start_date
-    )
-
-    await callback.message.edit_text(
-        "📅 Boshlanish vaqtini yuboring\n\n"
-        "Format:\n"
-        "01.01.2026 12:30"
-    )
-
-    await callback.answer()
-
-@router.message(
-    ManualReportStates.waiting_for_start_date
-)
 async def receive_start_date(
     message: Message,
     state: FSMContext,

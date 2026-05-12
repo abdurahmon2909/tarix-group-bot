@@ -82,7 +82,6 @@ dp.include_router(
 dp.include_router(
     auto_detect_router
 )
-
 # USERS
 dp.include_router(
     start_router
@@ -105,9 +104,18 @@ dp.include_router(
     broadcast_router
 )
 
-# SUPPORT LAST
+# SUPPORT
 dp.include_router(
     support_router
+)
+
+# GROUPS LAST
+dp.include_router(
+    auto_detect_router
+)
+
+dp.include_router(
+    tracker_router
 )
 async def main():
 
