@@ -1,29 +1,15 @@
 from __future__ import annotations
 
-from collections import defaultdict
-
 from datetime import (
     datetime,
     timedelta,
-    timezone,
 )
+
+from collections import Counter
 
 from app.database.repositories.messages import (
     get_messages_in_range,
 )
-
-
-def classify_activity(
-    percent: float,
-) -> str:
-
-    if percent >= 3:
-        return "Faol"
-
-    if percent >= 1:
-        return "Yaxshi"
-
-    return "O'rtacha"
 
 
 async def build_stats(
@@ -41,52 +27,54 @@ async def build_stats(
 
     total_messages = len(messages)
 
-    users_map = defaultdict(int)
+    counter = Counter()
 
-    names_map = {}
+    user_names = {}
 
     for msg in messages:
 
-        users_map[
-            msg.telegram_user_id
-        ] += 1
+        counter[msg.telegram_user_id] += 1
 
-        names_map[
-            msg.telegram_user_id
-        ] = msg.full_name
+        user_names[msg.telegram_user_id] = (
+            msg.full_name
+            or "Ism kiritilmagan"
+        )
 
     users = []
 
-    for user_id, count in users_map.items():
+    for user_id, msg_count in (
+        counter.most_common()
+    ):
 
         share_percent = round(
-            (count / total_messages) * 100,
-            2
+            (
+                msg_count
+                / total_messages
+                * 100
+            ),
+            2,
         ) if total_messages else 0
 
         users.append({
             "telegram_user_id": user_id,
-            "full_name": names_map.get(
-                user_id,
-                "Ism kiritilmagan",
-            ),
-            "msg_count": count,
-            "share_percent": share_percent,
-            "category": classify_activity(
+            "full_name": user_names[
+                user_id
+            ],
+            "msg_count": msg_count,
+            "share_percent": (
                 share_percent
             ),
         })
 
-    users.sort(
-        key=lambda x: x["msg_count"],
-        reverse=True,
-    )
-
     return {
         "group_name": group_name,
+        "group_id": chat_id,
+        "start_dt": start_dt,
+        "end_dt": end_dt,
         "total_messages": total_messages,
         "users": users,
     }
+
 
 async def get_stats_for_hours(
     chat_id: int,
@@ -104,6 +92,7 @@ async def get_stats_for_hours(
         chat_id=chat_id,
         start_dt=start_dt,
         end_dt=end_dt,
+        group_name=group_name,
     )
 
 
@@ -111,7 +100,9 @@ async def get_stats_for_range(
     chat_id: int,
     start_dt: datetime,
     end_dt: datetime,
+    group_name: str = "Guruh",
 ):
+
     return await build_stats(
         chat_id=chat_id,
         start_dt=start_dt,
