@@ -125,7 +125,7 @@ def build_pdf_report(
     # =========================
 
     title = Paragraph(
-        f"{stats['group_name']}<br/>"
+        f"{stats['group_name']} guruhi<br/>"
         f"Faollik Hisoboti",
         title_style,
     )
