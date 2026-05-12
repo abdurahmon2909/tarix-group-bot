@@ -282,6 +282,8 @@ def build_pdf_report(
             height=95 * mm,
         )
 
+        img.preserveAspectRatio = True
+
         img.hAlign = "CENTER"
 
         story.append(img)
@@ -406,209 +408,6 @@ def build_pdf_report(
         Spacer(1, 8)
     )
 
-    category_counts = {
-        "Faol": 0,
-        "Yaxshi": 0,
-        "O'rtacha": 0,
-        "Qoniqarli": 0,
-    }
-
-    for user in users:
-
-        category_counts[
-            user["category"]
-        ] += 1
-
-    total_users = len(users)
-
-    summary_data = [
-        [
-            Paragraph(
-                "Faol",
-                style_box_title,
-            ),
-            Paragraph(
-                "Yaxshi",
-                style_box_title,
-            ),
-            Paragraph(
-                "O'rtacha",
-                style_box_title,
-            ),
-            Paragraph(
-                "Qoniqarli",
-                style_box_title,
-            ),
-        ],
-        [
-            Paragraph(
-                f"{category_counts['Faol']} ({(category_counts['Faol']/total_users*100 if total_users else 0):.1f}%)",
-                style_box_value,
-            ),
-            Paragraph(
-                f"{category_counts['Yaxshi']} ({(category_counts['Yaxshi']/total_users*100 if total_users else 0):.1f}%)",
-                style_box_value,
-            ),
-            Paragraph(
-                f"{category_counts['O\\'rtacha']} ({(category_counts['O\\'rtacha']/total_users*100 if total_users else 0):.1f}%)",
-                style_box_value,
-            ),
-            Paragraph(
-                f"{category_counts['Qoniqarli']} ({(category_counts['Qoniqarli']/total_users*100 if total_users else 0):.1f}%)",
-                style_box_value,
-            ),
-        ],
-    ]
-
-    summary_table = Table(
-        summary_data,
-        colWidths=[
-            43 * mm,
-            43 * mm,
-            43 * mm,
-            43 * mm,
-        ],
-    )
-
-    summary_table.setStyle(
-        TableStyle([
-            ("BACKGROUND", (0, 0), (0, 1), colors.HexColor("#0b8f55")),
-            ("BACKGROUND", (1, 0), (1, 1), colors.HexColor("#1e88e5")),
-            ("BACKGROUND", (2, 0), (2, 1), colors.HexColor("#f9a825")),
-            ("BACKGROUND", (3, 0), (3, 1), colors.HexColor("#8d6e63")),
-            ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
-            ("BOX", (0, 0), (-1, -1), 1, colors.white),
-            ("INNERGRID", (0, 0), (-1, -1), 1, colors.white),
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ])
-    )
-
-    story.append(summary_table)
-
-    story.append(
-        Spacer(1, 12)
-    )
-
-    if users:
-
-        story.append(
-            Paragraph(
-                "<i><b>Eng faol 3 ishtirokchi</b></i>",
-                styles["Heading3"],
-            )
-        )
-
-        top3_data = [[
-            "TOP",
-            "Ism",
-            "Xabarlar",
-            "Ulush %",
-            "Toifa",
-        ]]
-
-        medals = [
-            "🥇 1",
-            "🥈 2",
-            "🥉 3",
-        ]
-
-        for idx, user in enumerate(
-            users[:3]
-        ):
-
-            top3_data.append([
-                medals[idx],
-                _safe(
-                    user["full_name"]
-                ),
-                str(
-                    user["msg_count"]
-                ),
-                str(
-                    user["share_percent"]
-                ),
-                user["category"],
-            ])
-
-        top3_table = Table(
-            top3_data,
-            colWidths=[
-                14 * mm,
-                78 * mm,
-                24 * mm,
-                24 * mm,
-                28 * mm,
-            ],
-        )
-
-        top3_style = [
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, 0),
-                colors.HexColor(
-                    "#123b5d"
-                ),
-            ),
-            (
-                "TEXTCOLOR",
-                (0, 0),
-                (-1, 0),
-                colors.white,
-            ),
-            (
-                "FONTNAME",
-                (0, 0),
-                (-1, 0),
-                "Helvetica-Bold",
-            ),
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                0.5,
-                colors.grey,
-            ),
-        ]
-
-        for row_idx, user in enumerate(
-            users[:3],
-            start=1,
-        ):
-
-            bg = get_category_color(
-                user["category"]
-            )
-
-            top3_style.append(
-                (
-                    "BACKGROUND",
-                    (0, row_idx),
-                    (-1, row_idx),
-                    bg,
-                )
-            )
-
-        top3_table.setStyle(
-            TableStyle(
-                top3_style
-            )
-        )
-
-        story.append(top3_table)
-
-        story.append(
-            Spacer(1, 14)
-        )
-
-    story.append(
-        Paragraph(
-            "<i><b>Batafsil jadval</b></i>",
-            styles["Heading3"],
-        )
-    )
-
     data = [[
         "No",
         "Ism",
@@ -633,7 +432,9 @@ def build_pdf_report(
             str(
                 user["share_percent"]
             ),
-            user["category"],
+            _safe(
+                user["category"]
+            ),
         ])
 
     table = Table(
@@ -681,12 +482,6 @@ def build_pdf_report(
             (0, 0),
             (-1, -1),
             8.8,
-        ),
-        (
-            "VALIGN",
-            (0, 0),
-            (-1, -1),
-            "MIDDLE",
         ),
     ]
 
