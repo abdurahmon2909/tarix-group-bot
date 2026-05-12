@@ -4,7 +4,7 @@ from aiogram.types import (
 )
 
 
-def admin_panel_keyboard():
+def admin_main_menu():
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
