@@ -58,3 +58,17 @@ async def admin_back_handler(
     )
 
     await callback.answer()
+
+@router.callback_query(
+    F.data == "admin_panel"
+)
+async def admin_panel_callback(
+    callback: CallbackQuery,
+):
+
+    await callback.message.edit_text(
+        "⚙️ Admin panel",
+        reply_markup=admin_main_menu(),
+    )
+
+    await callback.answer()

@@ -146,6 +146,11 @@ async def groups_menu(
         callback_data="delete_group_menu",
     )
 
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="admin_panel",
+    )
+
     kb.adjust(1)
 
     await callback.message.edit_text(
