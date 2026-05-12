@@ -417,10 +417,8 @@ async def manual_group_selected(
 
     await callback.answer()
 
-@router.callback_query(
-    F.data.startswith(
-        "manual_group:"
-    )
+@router.message(
+    ManualReportStates.waiting_for_start_date
 )
 
 async def receive_start_date(
