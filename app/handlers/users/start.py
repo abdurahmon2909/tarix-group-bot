@@ -10,7 +10,7 @@ from aiogram.types import (
     CallbackQuery,
 )
 from app.keyboards.admin import (
-    admin_panel_keyboard,
+    admin_main_menu,
 )
 from aiogram.filters import CommandStart
 
@@ -71,7 +71,7 @@ async def start_handler(
     if has_fullname:
         await message.answer(
             "⚙️ Admin panel",
-            reply_markup=admin_panel_keyboard(),
+            reply_markup=admin_main_menu(),
         )
         return
 
