@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 from aiogram import Router
-
-from aiogram.types import (
-    Message,
-)
+from aiogram.types import Message
 
 from app.database.repositories.groups import (
     is_group_active,
@@ -30,27 +27,27 @@ async def track_group_messages(
     ]:
         return
 
+    if not message.from_user:
+        return
+
     print(
         "GROUP MESSAGE:",
         message.text,
     )
 
-    active = await is_group_active(
-        message.chat.id
-    )
-
-    print(
-        "GROUP ACTIVE:",
-        active,
-    )
-
-    if not active:
-        return
-
-    if not message.from_user:
-        return
-
     try:
+
+        active = await is_group_active(
+            message.chat.id
+        )
+
+        print(
+            "GROUP ACTIVE:",
+            active,
+        )
+
+        if not active:
+            return
 
         await save_group_message(
             chat_id=message.chat.id,
@@ -67,9 +64,7 @@ async def track_group_messages(
                 message.from_user.username
             ),
             text=message.text or "",
-            sent_at=message.date.replace(
-                tzinfo=None
-            ),
+            sent_at=message.date,
         )
 
         print(
@@ -80,5 +75,5 @@ async def track_group_messages(
 
         print(
             "SAVE ERROR:",
-            e,
+            repr(e),
         )
