@@ -318,7 +318,7 @@ def build_pdf_report(
 
     story.append(
         Paragraph(
-            f"🏢 {group_name}",
+            f"🏢 {group_name} guruhi",
             style_group_title,
         )
     )
