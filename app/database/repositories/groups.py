@@ -156,3 +156,26 @@ async def get_all_groups():
         )
 
         return result.scalars().all()
+
+async def activate_group_by_id(
+    group_id: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Group).where(
+                Group.id == group_id
+            )
+        )
+
+        group = result.scalar_one_or_none()
+
+        if not group:
+            return False
+
+        group.is_active = True
+
+        await session.commit()
+
+        return True

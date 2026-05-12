@@ -3,7 +3,7 @@ from __future__ import annotations
 from app.database.repositories.groups import (
     create_group_if_not_exists,
     get_pending_groups,
-    activate_group,
+    activate_group_by_id,
 )
 
 
@@ -28,6 +28,6 @@ async def approve_group(
     group_id: int,
 ):
 
-    await activate_group(
+    await activate_group_by_id(
         group_id
     )
