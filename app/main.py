@@ -75,6 +75,9 @@ dp.update.middleware(
 # =========================
 # USERS
 dp.include_router(
+    tracker_router
+)
+dp.include_router(
     start_router
 )
 
@@ -105,9 +108,7 @@ dp.include_router(
     auto_detect_router
 )
 
-dp.include_router(
-    tracker_router
-)
+
 async def main():
 
     logging.info(
