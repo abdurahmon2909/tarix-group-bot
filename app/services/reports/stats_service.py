@@ -30,6 +30,7 @@ async def build_stats(
     chat_id: int,
     start_dt: datetime,
     end_dt: datetime,
+    group_name: str = "Guruh",
 ):
 
     messages = await get_messages_in_range(
@@ -82,17 +83,18 @@ async def build_stats(
     )
 
     return {
+        "group_name": group_name,
         "total_messages": total_messages,
         "users": users,
     }
 
-
 async def get_stats_for_hours(
     chat_id: int,
     hours: int,
+    group_name: str = "Guruh",
 ):
 
-    end_dt = datetime.utcnow()
+    end_dt = datetime.now(timezone.utc)
 
     start_dt = end_dt - timedelta(
         hours=hours
@@ -110,9 +112,9 @@ async def get_stats_for_range(
     start_dt: datetime,
     end_dt: datetime,
 ):
-
     return await build_stats(
         chat_id=chat_id,
         start_dt=start_dt,
         end_dt=end_dt,
+        group_name=group_name,
     )
