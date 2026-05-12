@@ -73,15 +73,6 @@ dp.update.middleware(
 # =========================
 # ROUTERS
 # =========================
-
-# TRACKER FIRST
-dp.include_router(
-    tracker_router
-)
-
-dp.include_router(
-    auto_detect_router
-)
 # USERS
 dp.include_router(
     start_router
