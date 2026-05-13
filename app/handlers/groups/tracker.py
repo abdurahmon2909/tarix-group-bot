@@ -226,10 +226,9 @@ async def track_group_messages(
 
     except Exception as e:
 
-        print(
-            "LINK BLOCK ERROR:",
-            repr(e),
-        )
+        import traceback
+
+        traceback.print_exc()
 
     # =========================
     # AUTO CREATE GROUP
