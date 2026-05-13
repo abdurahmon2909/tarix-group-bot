@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from aiogram import Router
+print("TRACKER FILE LOADED")
+
+from aiogram import (
+    Router,
+)
 
 from aiogram.types import (
     Message,
@@ -13,22 +17,21 @@ from app.database.repositories.groups import (
 from app.database.repositories.messages import (
     save_group_message,
 )
-print("TRACKER FILE LOADED")
+
 router = Router()
 
 
-@router.message()
+@router.message(
+    lambda message: (
+        message.chat.type
+        in ["group", "supergroup"]
+    )
+)
 async def track_group_messages(
     message: Message,
 ):
 
     print("TRACKER HIT")
-
-    if message.chat.type not in [
-        "group",
-        "supergroup",
-    ]:
-        return
 
     if not message.from_user:
         return
