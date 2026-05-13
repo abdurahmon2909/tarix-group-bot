@@ -36,9 +36,6 @@ from app.handlers.admin import (
     support_router,
 )
 
-from app.handlers.groups.auto_detect import (
-    router as auto_detect_router,
-)
 
 from app.handlers.groups.tracker import (
     router as tracker_router,
@@ -107,9 +104,6 @@ dp.include_router(
 )
 
 # GROUP HANDLERS LAST
-dp.include_router(
-    auto_detect_router
-)
 
 dp.include_router(
     tracker_router

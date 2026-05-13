@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-print("TRACKER FILE LOADED")
-
 from aiogram import (
     Router,
 )
@@ -11,6 +9,7 @@ from aiogram.types import (
 )
 
 from app.database.repositories.groups import (
+    create_group_if_not_exists,
     is_group_active,
 )
 
@@ -21,17 +20,18 @@ from app.database.repositories.messages import (
 router = Router()
 
 
-@router.message(
-    lambda message: (
-        message.chat.type
-        in ["group", "supergroup"]
-    )
-)
+@router.message()
 async def track_group_messages(
     message: Message,
 ):
 
     print("TRACKER HIT")
+
+    if message.chat.type not in [
+        "group",
+        "supergroup",
+    ]:
+        return
 
     if not message.from_user:
         return
@@ -40,6 +40,19 @@ async def track_group_messages(
         "GROUP MESSAGE:",
         message.text,
     )
+
+    # =========================
+    # AUTO CREATE GROUP
+    # =========================
+
+    await create_group_if_not_exists(
+        telegram_chat_id=message.chat.id,
+        title=message.chat.title or "Noma'lum",
+    )
+
+    # =========================
+    # CHECK ACTIVE
+    # =========================
 
     active = await is_group_active(
         message.chat.id
@@ -52,6 +65,10 @@ async def track_group_messages(
 
     if not active:
         return
+
+    # =========================
+    # SAVE MESSAGE
+    # =========================
 
     try:
 
