@@ -26,7 +26,7 @@ from app.handlers.users import (
     start_router,
 )
 from app.database.init_db import (
-    init_db,
+    init_models,
 )
 from app.handlers.admin import (
     panel_router,
@@ -124,7 +124,7 @@ async def main():
     logging.info(
         "Bot started"
     )
-    await init_db()
+    await init_models()
     await refresh_groups_cache()
 
     await bot.delete_webhook(
