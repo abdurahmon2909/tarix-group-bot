@@ -100,83 +100,84 @@ async def track_group_messages(
 
     try:
 
+        print("LINK BLOCK CHECK")
+
         member = await message.bot.get_chat_member(
             chat_id=message.chat.id,
             user_id=message.from_user.id,
         )
 
-        if member.status not in [
+        if str(member.status) in [
             "administrator",
             "creator",
         ]:
+            return
 
-            has_link = False
+        has_link = False
 
-            if (
-                    message.text
-                    and LINK_REGEX.search(
+        if (
                 message.text
-            )
-            ):
-                has_link = True
+                and LINK_REGEX.search(
+            message.text
+        )
+        ):
+            has_link = True
 
-            if (
-                    message.caption
-                    and LINK_REGEX.search(
+        if (
                 message.caption
-            )
+                and LINK_REGEX.search(
+            message.caption
+        )
+        ):
+            has_link = True
+
+        if message.entities:
+
+            for entity in message.entities:
+
+                if entity.type in [
+                    "url",
+                    "text_link",
+                ]:
+                    has_link = True
+
+                    break
+
+        if message.caption_entities:
+
+            for entity in (
+                    message.caption_entities
             ):
-                has_link = True
 
-            if message.entities:
+                if entity.type in [
+                    "url",
+                    "text_link",
+                ]:
+                    has_link = True
 
-                for entity in message.entities:
+                    break
 
-                    if entity.type in [
-                        "url",
-                        "text_link",
-                    ]:
-                        has_link = True
+        if has_link:
 
-                        break
+            await message.delete()
 
-            if message.caption_entities:
-
-                for entity in (
-                        message.caption_entities
-                ):
-
-                    if entity.type in [
-                        "url",
-                        "text_link",
-                    ]:
-                        has_link = True
-
-                        break
-
-            if has_link:
-
-                await message.delete()
-
-                warning = await message.answer(
-                    (
-                        f"{message.from_user.full_name}, "
-                        f"guruhga link yuborish mumkin emas."
-                    )
+            warning = await message.answer(
+                (
+                    f"{message.from_user.full_name}, "
+                    f"guruhga link tashlamang!"
                 )
+            )
 
-                await asyncio.sleep(5)
+            print("LINK DELETED")
 
-                try:
-                    await warning.delete()
-                except:
-                    pass
+            await asyncio.sleep(5)
 
-                print(
-                    "LINK DELETED"
-                )
+            try:
+                await warning.delete()
+            except:
+                pass
 
-                return
+            return
 
     except Exception as e:
 
