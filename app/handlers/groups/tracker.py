@@ -1,5 +1,6 @@
 from __future__ import annotations
 import re
+import asyncio
 from aiogram.enums import (
     ChatMemberStatus,
 )
