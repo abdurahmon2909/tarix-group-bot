@@ -36,19 +36,31 @@ async def track_group_messages(
 
     print("TRACKER HIT")
 
+    # =========================
+    # ONLY GROUPS
+    # =========================
+
     if message.chat.type not in [
         ChatType.GROUP,
         ChatType.SUPERGROUP,
     ]:
         return
 
-    if not message.from_user:
+    # =========================
+    # IGNORE BOTS
+    # =========================
+
+    if (
+        not message.from_user
+        or message.from_user.is_bot
+    ):
         return
 
     print(
         "GROUP MESSAGE:",
         message.text,
     )
+
     # =========================
     # AUTO DELETE JOIN/LEFT
     # =========================
@@ -64,6 +76,7 @@ async def track_group_messages(
             )
 
             if not is_bot_join:
+
                 await message.delete()
 
                 print(
@@ -75,14 +88,15 @@ async def track_group_messages(
         if message.left_chat_member:
 
             is_bot_leave = (
-                    message.left_chat_member.is_bot
-                    and (
-                            message.left_chat_member.id
-                            == message.bot.id
-                    )
+                message.left_chat_member.is_bot
+                and (
+                    message.left_chat_member.id
+                    == message.bot.id
+                )
             )
 
             if not is_bot_leave:
+
                 await message.delete()
 
                 print(
@@ -111,27 +125,26 @@ async def track_group_messages(
             user_id=message.from_user.id,
         )
 
-        if member.status in [
+        is_admin = member.status in [
             ChatMemberStatus.ADMINISTRATOR,
             ChatMemberStatus.CREATOR,
-        ]:
-            return
+        ]
 
         has_link = False
 
         if (
-                message.text
-                and LINK_REGEX.search(
             message.text
-        )
+            and LINK_REGEX.search(
+                message.text
+            )
         ):
             has_link = True
 
         if (
-                message.caption
-                and LINK_REGEX.search(
             message.caption
-        )
+            and LINK_REGEX.search(
+                message.caption
+            )
         ):
             has_link = True
 
@@ -143,6 +156,7 @@ async def track_group_messages(
                     "url",
                     "text_link",
                 ]:
+
                     has_link = True
 
                     break
@@ -150,18 +164,19 @@ async def track_group_messages(
         if message.caption_entities:
 
             for entity in (
-                    message.caption_entities
+                message.caption_entities
             ):
 
                 if entity.type in [
                     "url",
                     "text_link",
                 ]:
+
                     has_link = True
 
                     break
 
-        if has_link:
+        if has_link and not is_admin:
 
             await message.delete()
 
@@ -189,64 +204,69 @@ async def track_group_messages(
             "LINK BLOCK ERROR:",
             repr(e),
         )
+
     # =========================
     # AUTO CREATE GROUP
     # =========================
 
-    await create_group_if_not_exists(
-        telegram_chat_id=message.chat.id,
-        title=message.chat.title or "Noma'lum",
+    group = await get_group_by_chat_id(
+        message.chat.id
     )
+
+    if not group:
+
+        print(
+            "AUTO DETECT HIT"
+        )
+
+        await create_group(
+            telegram_chat_id=message.chat.id,
+            title=message.chat.title,
+            is_active=True,
+        )
+
+        print(
+            "NEW GROUP:",
+            message.chat.title,
+        )
+
+        return
 
     # =========================
     # CHECK ACTIVE
     # =========================
 
-    active = await is_group_active(
-        message.chat.id
-    )
-
     print(
         "GROUP ACTIVE:",
-        active,
+        group.is_active,
     )
 
-    if not active:
+    if not group.is_active:
         return
 
     # =========================
     # SAVE MESSAGE
     # =========================
 
-    try:
+    text = (
+        message.text
+        or message.caption
+        or ""
+    )
 
-        await save_group_message(
-            chat_id=message.chat.id,
-            telegram_message_id=(
-                message.message_id
-            ),
-            telegram_user_id=(
-                message.from_user.id
-            ),
-            full_name=(
-                message.from_user.full_name
-            ),
-            username=(
-                message.from_user.username
-            ),
-            text=message.text or "",
-            sent_at=message.date.replace(
-                tzinfo=None
-            ),
-        )
+    await save_message(
+        chat_id=message.chat.id,
+        user_id=message.from_user.id,
+        full_name=(
+            message.from_user.full_name
+        ),
+        username=(
+            message.from_user.username
+        ),
+        text=text,
+        sent_at=message.date.replace(
+            tzinfo=None
+        ),
+    )
 
-        print(
-            "MESSAGE SAVED"
-        )
-
-    except Exception as e:
-
-        print(
-            "SAVE ERROR:",
-            repr(e),
-        )
+    print("MESSAGE SAVED")
