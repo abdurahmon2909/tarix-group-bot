@@ -9,7 +9,9 @@ from datetime import (
 
 from aiogram import Router
 from aiogram import F
-
+from app.keyboards.admin import (
+    admin_main_menu,
+)
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardMarkup,
@@ -560,7 +562,8 @@ async def receive_end_date(
     )
 
     await state.clear()
-    await callback.message.answer(
+
+    await message.answer(
         "⚙️ Admin panel",
         reply_markup=admin_main_menu(),
     )
