@@ -3,7 +3,9 @@ from __future__ import annotations
 from aiogram import (
     Router,
 )
-
+from aiogram.enums import (
+    ChatType,
+)
 from aiogram.types import (
     Message,
 )
@@ -28,8 +30,8 @@ async def track_group_messages(
     print("TRACKER HIT")
 
     if message.chat.type not in [
-        "group",
-        "supergroup",
+        ChatType.GROUP,
+        ChatType.SUPERGROUP,
     ]:
         return
 
@@ -40,7 +42,54 @@ async def track_group_messages(
         "GROUP MESSAGE:",
         message.text,
     )
+    # =========================
+    # AUTO DELETE JOIN/LEFT
+    # =========================
 
+    try:
+
+        if message.new_chat_members:
+
+            is_bot_join = any(
+                user.is_bot
+                and user.id == message.bot.id
+                for user in message.new_chat_members
+            )
+
+            if not is_bot_join:
+                await message.delete()
+
+                print(
+                    "JOIN MESSAGE DELETED"
+                )
+
+                return
+
+        if message.left_chat_member:
+
+            is_bot_leave = (
+                    message.left_chat_member.is_bot
+                    and (
+                            message.left_chat_member.id
+                            == message.bot.id
+                    )
+            )
+
+            if not is_bot_leave:
+                await message.delete()
+
+                print(
+                    "LEFT MESSAGE DELETED"
+                )
+
+                return
+
+    except Exception as e:
+
+        print(
+            "JOIN/LEFT DELETE ERROR:",
+            repr(e),
+        )
     # =========================
     # AUTO CREATE GROUP
     # =========================
