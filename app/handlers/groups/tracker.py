@@ -13,7 +13,10 @@ from aiogram.enums import (
 from aiogram.types import (
     Message,
 )
-
+from app.database.repositories.groups import (
+    get_group_by_chat_id,
+    create_group,
+)
 from app.database.repositories.groups import (
     create_group_if_not_exists,
     is_group_active,
