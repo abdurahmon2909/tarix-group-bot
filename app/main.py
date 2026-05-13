@@ -38,6 +38,7 @@ from app.handlers.groups import (
     tracker_router,
     auto_detect_router,
 )
+
 # =========================
 # LOGGING
 # =========================
@@ -73,10 +74,18 @@ dp.update.middleware(
 # =========================
 # ROUTERS
 # =========================
-# USERS
+
+# GROUP AUTO DETECT
+dp.include_router(
+    auto_detect_router
+)
+
+# GROUP TRACKER
 dp.include_router(
     tracker_router
 )
+
+# USERS
 dp.include_router(
     start_router
 )
@@ -103,11 +112,9 @@ dp.include_router(
     support_router
 )
 
-# GROUPS LAST
-dp.include_router(
-    auto_detect_router
-)
-
+# =========================
+# MAIN
+# =========================
 
 async def main():
 
@@ -117,9 +124,17 @@ async def main():
 
     await refresh_groups_cache()
 
-    await dp.start_polling(bot)
+    await bot.delete_webhook(
+        drop_pending_updates=True
+    )
+
+    await dp.start_polling(
+        bot
+    )
 
 
 if __name__ == "__main__":
 
-    asyncio.run(main())
+    asyncio.run(
+        main()
+    )
