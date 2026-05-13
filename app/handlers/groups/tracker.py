@@ -13,7 +13,7 @@ from app.database.repositories.groups import (
 from app.database.repositories.messages import (
     save_group_message,
 )
-
+print("TRACKER FILE LOADED")
 router = Router()
 
 
