@@ -75,16 +75,6 @@ dp.update.middleware(
 # ROUTERS
 # =========================
 
-# GROUP AUTO DETECT
-dp.include_router(
-    auto_detect_router
-)
-
-# GROUP TRACKER
-dp.include_router(
-    tracker_router
-)
-
 # USERS
 dp.include_router(
     start_router
@@ -110,6 +100,15 @@ dp.include_router(
 # SUPPORT
 dp.include_router(
     support_router
+)
+
+# GROUP HANDLERS LAST
+dp.include_router(
+    auto_detect_router
+)
+
+dp.include_router(
+    tracker_router
 )
 
 # =========================

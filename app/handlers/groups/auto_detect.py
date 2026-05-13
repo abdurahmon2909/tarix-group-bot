@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from aiogram import Router
+from aiogram import (
+    Router,
+    F,
+)
+
 from aiogram.types import (
     Message,
 )
@@ -12,15 +16,16 @@ from app.database.repositories.groups import (
 router = Router()
 
 
-@router.message()
+@router.message(
+    F.chat.type.in_(
+        {"group", "supergroup"}
+    )
+)
 async def detect_new_group(
     message: Message,
 ):
 
-    if message.chat.type not in [
-        "group",
-        "supergroup",
-    ]:
+    if not message.chat:
         return
 
     await create_group_if_not_exists(
