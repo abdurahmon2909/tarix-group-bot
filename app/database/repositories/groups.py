@@ -179,3 +179,28 @@ async def activate_group_by_id(
         await session.commit()
 
         return True
+
+async def delete_group_by_id(
+    group_id: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Group).where(
+                Group.id == group_id
+            )
+        )
+
+        group = result.scalar_one_or_none()
+
+        if not group:
+            return False
+
+        await session.delete(
+            group
+        )
+
+        await session.commit()
+
+        return True

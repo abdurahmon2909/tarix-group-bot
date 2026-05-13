@@ -1,18 +1,24 @@
 from __future__ import annotations
 
-from aiogram import Router
-from aiogram import F
+from aiogram import (
+    Router,
+    F,
+)
 
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
+
+from aiogram.utils.keyboard import (
+    InlineKeyboardBuilder,
+)
+
 from app.database.repositories.groups import (
     get_all_groups,
-)
-from app.database.repositories.groups import (
     get_pending_groups,
+    delete_group_by_id,
 )
 
 from app.services.groups.group_service import (
@@ -22,10 +28,97 @@ from app.services.groups.group_service import (
 from app.utils.admin import (
     is_admin,
 )
-from aiogram.utils.keyboard import (
-    InlineKeyboardBuilder,
-)
+
 router = Router()
+
+
+@router.callback_query(
+    F.data == "groups_menu"
+)
+async def groups_menu(
+    callback: CallbackQuery,
+):
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📋 Ro‘yxat",
+        callback_data="groups_list",
+    )
+
+    kb.button(
+        text="➕ Qo‘shish",
+        callback_data="add_group",
+    )
+
+    kb.button(
+        text="❌ O‘chirish",
+        callback_data="delete_group_menu",
+    )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="admin_panel",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "📂 Guruhlar bo‘limi",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+@router.callback_query(
+    F.data == "groups_list"
+)
+async def groups_list(
+    callback: CallbackQuery,
+):
+
+    groups = await get_all_groups()
+
+    text = "📋 Guruhlar ro‘yxati:\n\n"
+
+    if not groups:
+
+        text += "Guruhlar topilmadi."
+
+    else:
+
+        for idx, group in enumerate(
+            groups,
+            start=1,
+        ):
+
+            status = (
+                "✅"
+                if group.is_active
+                else "❌"
+            )
+
+            text += (
+                f"{idx}. {status} "
+                f"{group.title}\n"
+            )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="groups_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
 
 
 @router.callback_query(
@@ -81,6 +174,13 @@ async def add_group_menu(
             )
         ])
 
+    keyboard.append([
+        InlineKeyboardButton(
+            text="⬅️ Orqaga",
+            callback_data="groups_menu",
+        )
+    ])
+
     await callback.message.edit_text(
         text,
         reply_markup=InlineKeyboardMarkup(
@@ -106,64 +206,37 @@ async def approve_group_handler(
     if not is_admin(
         callback.from_user.id
     ):
-
         return
 
     group_id = int(
         callback.data.split(":")[1]
     )
 
-    await approve_group(group_id)
-
-    await callback.answer(
-        "✅ Guruh qo'shildi"
+    await approve_group(
+        group_id
     )
-
-    await callback.message.edit_text(
-        "✅ Guruh aktiv qilindi"
-    )
-@router.callback_query(
-    F.data == "groups_menu"
-)
-async def groups_menu(
-    callback: CallbackQuery,
-):
 
     kb = InlineKeyboardBuilder()
 
     kb.button(
-        text="📋 Ro‘yxat",
-        callback_data="groups_list",
-    )
-
-    kb.button(
-        text="➕ Qo‘shish",
-        callback_data="add_group",
-    )
-
-    kb.button(
-        text="❌ O‘chirish",
-        callback_data="delete_group_menu",
-    )
-
-    kb.button(
-        text="⬅️ Orqaga",
-        callback_data="admin_panel",
+        text="⬅️ Guruhlarga qaytish",
+        callback_data="groups_menu",
     )
 
     kb.adjust(1)
 
     await callback.message.edit_text(
-        "📂 Guruhlar bo‘limi",
+        "✅ Guruh aktiv qilindi",
         reply_markup=kb.as_markup(),
     )
 
     await callback.answer()
 
+
 @router.callback_query(
-    F.data == "groups_list"
+    F.data == "delete_group_menu"
 )
-async def groups_list(
+async def delete_group_menu(
     callback: CallbackQuery,
 ):
 
@@ -171,30 +244,23 @@ async def groups_list(
 
     if not groups:
 
-        await callback.message.edit_text(
-            "Guruhlar topilmadi."
+        await callback.answer(
+            "Guruhlar topilmadi",
+            show_alert=True,
         )
 
         return
 
-    text = "📋 Guruhlar ro‘yxati:\n\n"
-
-    for idx, group in enumerate(
-        groups,
-        start=1,
-    ):
-
-        status = (
-            "✅"
-            if group.is_active
-            else "❌"
-        )
-
-        text += (
-            f"{idx}. {status} "
-            f"{group.title}\n"
-        )
     kb = InlineKeyboardBuilder()
+
+    for group in groups:
+
+        kb.button(
+            text=f"❌ {group.title}",
+            callback_data=(
+                f"delete_group:{group.id}"
+            ),
+        )
 
     kb.button(
         text="⬅️ Orqaga",
@@ -202,8 +268,44 @@ async def groups_list(
     )
 
     kb.adjust(1)
+
     await callback.message.edit_text(
-        text
+        "❌ O‘chiriladigan guruhni tanlang",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+@router.callback_query(
+    F.data.startswith(
+        "delete_group:"
+    )
+)
+async def delete_group_handler(
+    callback: CallbackQuery,
+):
+
+    group_id = int(
+        callback.data.split(":")[1]
+    )
+
+    await delete_group_by_id(
+        group_id
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="⬅️ Guruhlarga qaytish",
+        callback_data="groups_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "✅ Guruh o‘chirildi",
+        reply_markup=kb.as_markup(),
     )
 
     await callback.answer()
