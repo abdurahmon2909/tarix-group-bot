@@ -270,7 +270,7 @@ async def delete_group_menu(
     kb.adjust(1)
 
     await callback.message.edit_text(
-        "❌ O‘chiriladigan guruhni tanlang",
+        "O‘chiriladigan guruhni tanlang",
         reply_markup=kb.as_markup(),
     )
 
