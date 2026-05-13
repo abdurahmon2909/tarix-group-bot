@@ -893,7 +893,7 @@ async def end_minute_selected(
     )
 
     await state.clear()
-
+    await asyncio.sleep(0.3)
     await callback.message.answer(
         "⚙️ Admin panel",
         reply_markup=admin_main_menu(),

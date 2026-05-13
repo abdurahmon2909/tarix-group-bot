@@ -142,13 +142,21 @@ async def track_group_messages(
 
         # TEXT LINK
 
-        if (
-            message.text
-            and LINK_REGEX.search(
-                message.text
+        if message.text:
+
+            print(
+                "TEXT:",
+                repr(message.text)
             )
-        ):
-            has_link = True
+
+            if LINK_REGEX.search(
+                    message.text.strip()
+            ):
+                print(
+                    "TEXT LINK DETECTED"
+                )
+
+                has_link = True
 
         # CAPTION LINK
 
