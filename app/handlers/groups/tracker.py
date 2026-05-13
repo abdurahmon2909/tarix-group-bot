@@ -1,5 +1,8 @@
 from __future__ import annotations
 import re
+from aiogram.enums import (
+    ChatMemberStatus,
+)
 from aiogram import (
     Router,
 )
@@ -107,9 +110,9 @@ async def track_group_messages(
             user_id=message.from_user.id,
         )
 
-        if str(member.status) in [
-            "administrator",
-            "creator",
+        if member.status in [
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.CREATOR,
         ]:
             return
 
