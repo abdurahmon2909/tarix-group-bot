@@ -509,6 +509,10 @@ async def receive_end_date(
         "📊 Hisobot tayyorlanmoqda..."
     )
 
+    # =========================
+    # GET STATS
+    # =========================
+
     stats = await get_stats_for_range(
         chat_id=group_id,
         start_dt=start_dt,
@@ -523,11 +527,19 @@ async def receive_end_date(
         group_id
     )
 
+    # =========================
+    # PERIOD LABEL
+    # =========================
+
     period_label = (
         f"{start_dt.strftime('%d.%m.%Y %H:%M')}"
         f" - "
         f"{end_dt.strftime('%d.%m.%Y %H:%M')}"
     )
+
+    # =========================
+    # CREATE REPORTS FOLDER
+    # =========================
 
     os.makedirs(
         "reports",
@@ -540,6 +552,10 @@ async def receive_end_date(
         f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     )
 
+    # =========================
+    # BUILD PDF
+    # =========================
+
     await asyncio.to_thread(
         build_pdf_report,
         stats,
@@ -547,19 +563,36 @@ async def receive_end_date(
         filename,
     )
 
-    await message.answer_document(
-        FSInputFile(
-            filename,
-            filename=(
-                f"HISOBOT - "
-                f"{group_name}.pdf"
+    # =========================
+    # SEND PDF
+    # =========================
+
+    try:
+
+        await message.answer_document(
+            FSInputFile(
+                filename,
+                filename=(
+                    f"HISOBOT - "
+                    f"{group_name}.pdf"
+                ),
             ),
-        ),
-        caption=(
-            f"📊 {group_name}\n"
-            f"📅 {period_label}"
-        ),
-    )
+            caption=(
+                f"📊 {group_name}\n"
+                f"📅 {period_label}"
+            ),
+        )
+
+    except Exception as e:
+
+        print(
+            "PDF SEND ERROR:",
+            repr(e),
+        )
+
+    # =========================
+    # RETURN TO ADMIN PANEL
+    # =========================
 
     await state.clear()
 
