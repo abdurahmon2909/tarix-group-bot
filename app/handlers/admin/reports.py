@@ -29,7 +29,12 @@ from aiogram.fsm.context import (
 from app.states.manual_reports import (
     ManualReportStates,
 )
-
+from app.keyboards.calendar import (
+    build_calendar_keyboard,
+    build_hour_keyboard,
+    build_minute_keyboard,
+    current_year_month,
+)
 from app.utils.datetime_parser import (
     parse_datetime,
 )
@@ -407,89 +412,6 @@ async def manual_group_selected(
         report_group_id=group_id
     )
 
-    await state.set_state(
-        ManualReportStates.waiting_for_start_date
-    )
-
-    await callback.message.edit_text(
-        "📅 Boshlanish vaqtini yuboring\n\n"
-        "Format:\n"
-        "01.01.2026 12:30"
-    )
-
-    await callback.answer()
-
-@router.message(
-    ManualReportStates.waiting_for_start_date
-)
-
-async def receive_start_date(
-    message: Message,
-    state: FSMContext,
-):
-
-    if not message.text:
-        return
-
-    start_dt = parse_datetime(
-        message.text
-    )
-
-    if not start_dt:
-
-        await message.answer(
-            "❌ Format noto'g'ri\n\n"
-            "Masalan:\n"
-            "01.01.2026 12:30"
-        )
-
-        return
-
-    await state.update_data(
-        start_dt=start_dt.isoformat()
-    )
-
-    await state.set_state(
-        ManualReportStates.waiting_for_end_date
-    )
-
-    await message.answer(
-        "📅 Tugash vaqtini yuboring\n\n"
-        "Format:\n"
-        "01.01.2026 18:30"
-    )
-
-@router.message(
-    ManualReportStates.waiting_for_end_date
-)
-async def receive_end_date(
-    message: Message,
-    state: FSMContext,
-):
-
-    if not message.text:
-        return
-
-    end_dt = parse_datetime(
-        message.text
-    )
-
-    if not end_dt:
-
-        await message.answer(
-            "❌ Format noto'g'ri"
-        )
-
-        return
-
-    data = await state.get_data()
-
-    start_dt = datetime.fromisoformat(
-        data["start_dt"]
-    )
-
-    group_id = data["report_group_id"]
-
     groups = await get_active_groups()
 
     group_name = "Noma'lum guruh"
@@ -505,9 +427,27 @@ async def receive_end_date(
 
             break
 
-    await message.answer(
-        "📊 Hisobot tayyorlanmoqda..."
+    year, month = current_year_month()
+
+    await state.set_state(
+        ManualReportStates.waiting_for_start_date
     )
+
+    await callback.message.edit_text(
+        (
+            f"✅ Guruh: {group_name}\n\n"
+            f"📅 BOSHLANG‘ICH SANANI tanlang:"
+        ),
+        reply_markup=build_calendar_keyboard(
+            year=year,
+            month=month,
+            prefix="start",
+        ),
+    )
+
+    await callback.answer()
+
+
 
     # =========================
     # GET STATS
@@ -600,3 +540,458 @@ async def receive_end_date(
         "⚙️ Admin panel",
         reply_markup=admin_main_menu(),
     )
+
+# =========================
+# CALENDAR NAVIGATION
+# =========================
+
+@router.callback_query(
+    F.data.startswith("start:prev:")
+)
+async def start_calendar_prev(
+    callback: CallbackQuery,
+):
+
+    parts = callback.data.split(":")
+
+    year = int(parts[2])
+    month = int(parts[3])
+
+    month -= 1
+
+    if month < 1:
+        month = 12
+        year -= 1
+
+    await callback.message.edit_reply_markup(
+        reply_markup=build_calendar_keyboard(
+            year=year,
+            month=month,
+            prefix="start",
+        )
+    )
+
+    await callback.answer()
+
+
+@router.callback_query(
+    F.data.startswith("start:next:")
+)
+async def start_calendar_next(
+    callback: CallbackQuery,
+):
+
+    parts = callback.data.split(":")
+
+    year = int(parts[2])
+    month = int(parts[3])
+
+    month += 1
+
+    if month > 12:
+        month = 1
+        year += 1
+
+    await callback.message.edit_reply_markup(
+        reply_markup=build_calendar_keyboard(
+            year=year,
+            month=month,
+            prefix="start",
+        )
+    )
+
+    await callback.answer()
+
+
+# =========================
+# START DATE SELECT
+# =========================
+
+@router.callback_query(
+    F.data.startswith("start:day:")
+)
+async def start_day_selected(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    parts = callback.data.split(":")
+
+    year = int(parts[2])
+    month = int(parts[3])
+    day = int(parts[4])
+
+    start_date = datetime(
+        year,
+        month,
+        day,
+    )
+
+    await state.update_data(
+        start_date=start_date.isoformat()
+    )
+
+    await callback.message.edit_text(
+        (
+            f"📅 Boshlanish sanasi:\n"
+            f"{start_date.strftime('%d.%m.%Y')}\n\n"
+            f"⏰ BOSHLANG‘ICH SOATNI tanlang:"
+        ),
+        reply_markup=build_hour_keyboard(
+            prefix="start"
+        ),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# START HOUR
+# =========================
+
+@router.callback_query(
+    F.data.startswith("start:hour:")
+)
+async def start_hour_selected(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    hour = int(
+        callback.data.split(":")[2]
+    )
+
+    await state.update_data(
+        start_hour=hour
+    )
+
+    await callback.message.edit_text(
+        (
+            f"⏰ Boshlanish soati:\n"
+            f"{hour:02d}:00\n\n"
+            f"🕒 DAQIQANI tanlang:"
+        ),
+        reply_markup=build_minute_keyboard(
+            prefix="start"
+        ),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# START MINUTE
+# =========================
+
+@router.callback_query(
+    F.data.startswith("start:minute:")
+)
+async def start_minute_selected(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    minute = int(
+        callback.data.split(":")[2]
+    )
+
+    data = await state.get_data()
+
+    start_date = datetime.fromisoformat(
+        data["start_date"]
+    )
+
+    start_hour = data["start_hour"]
+
+    start_dt = start_date.replace(
+        hour=start_hour,
+        minute=minute,
+    )
+
+    await state.update_data(
+        start_dt=start_dt.isoformat()
+    )
+
+    year, month = current_year_month()
+
+    await state.set_state(
+        ManualReportStates.waiting_for_end_date
+    )
+
+    await callback.message.edit_text(
+        (
+            f"✅ Boshlanish:\n"
+            f"{start_dt.strftime('%d.%m.%Y %H:%M')}\n\n"
+            f"📅 TUGASH SANASINI tanlang:"
+        ),
+        reply_markup=build_calendar_keyboard(
+            year=year,
+            month=month,
+            prefix="end",
+        ),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# END CALENDAR NAVIGATION
+# =========================
+
+@router.callback_query(
+    F.data.startswith("end:prev:")
+)
+async def end_calendar_prev(
+    callback: CallbackQuery,
+):
+
+    parts = callback.data.split(":")
+
+    year = int(parts[2])
+    month = int(parts[3])
+
+    month -= 1
+
+    if month < 1:
+        month = 12
+        year -= 1
+
+    await callback.message.edit_reply_markup(
+        reply_markup=build_calendar_keyboard(
+            year=year,
+            month=month,
+            prefix="end",
+        )
+    )
+
+    await callback.answer()
+
+
+@router.callback_query(
+    F.data.startswith("end:next:")
+)
+async def end_calendar_next(
+    callback: CallbackQuery,
+):
+
+    parts = callback.data.split(":")
+
+    year = int(parts[2])
+    month = int(parts[3])
+
+    month += 1
+
+    if month > 12:
+        month = 1
+        year += 1
+
+    await callback.message.edit_reply_markup(
+        reply_markup=build_calendar_keyboard(
+            year=year,
+            month=month,
+            prefix="end",
+        )
+    )
+
+    await callback.answer()
+
+
+# =========================
+# END DATE SELECT
+# =========================
+
+@router.callback_query(
+    F.data.startswith("end:day:")
+)
+async def end_day_selected(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    parts = callback.data.split(":")
+
+    year = int(parts[2])
+    month = int(parts[3])
+    day = int(parts[4])
+
+    end_date = datetime(
+        year,
+        month,
+        day,
+    )
+
+    await state.update_data(
+        end_date=end_date.isoformat()
+    )
+
+    await callback.message.edit_text(
+        (
+            f"📅 Tugash sanasi:\n"
+            f"{end_date.strftime('%d.%m.%Y')}\n\n"
+            f"⏰ TUGASH SOATINI tanlang:"
+        ),
+        reply_markup=build_hour_keyboard(
+            prefix="end"
+        ),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# END HOUR
+# =========================
+
+@router.callback_query(
+    F.data.startswith("end:hour:")
+)
+async def end_hour_selected(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    hour = int(
+        callback.data.split(":")[2]
+    )
+
+    await state.update_data(
+        end_hour=hour
+    )
+
+    await callback.message.edit_text(
+        (
+            f"⏰ Tugash soati:\n"
+            f"{hour:02d}:00\n\n"
+            f"🕒 DAQIQANI tanlang:"
+        ),
+        reply_markup=build_minute_keyboard(
+            prefix="end"
+        ),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# END MINUTE
+# =========================
+
+@router.callback_query(
+    F.data.startswith("end:minute:")
+)
+async def end_minute_selected(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    minute = int(
+        callback.data.split(":")[2]
+    )
+
+    data = await state.get_data()
+
+    end_date = datetime.fromisoformat(
+        data["end_date"]
+    )
+
+    end_hour = data["end_hour"]
+
+    end_dt = end_date.replace(
+        hour=end_hour,
+        minute=minute,
+    )
+
+    start_dt = datetime.fromisoformat(
+        data["start_dt"]
+    )
+
+    if end_dt < start_dt:
+
+        await callback.answer(
+            "❌ Tugash vaqti boshlanishdan oldin bo‘lmasin",
+            show_alert=True,
+        )
+
+        return
+
+    group_id = data["report_group_id"]
+
+    groups = await get_active_groups()
+
+    group_name = "Noma'lum guruh"
+
+    for group in groups:
+
+        if (
+            group.telegram_chat_id
+            == group_id
+        ):
+
+            group_name = group.title
+
+            break
+
+    await callback.message.edit_text(
+        "📊 Hisobot tayyorlanmoqda..."
+    )
+
+    stats = await get_stats_for_range(
+        chat_id=group_id,
+        start_dt=start_dt,
+        end_dt=end_dt,
+    )
+
+    stats["group_name"] = (
+        group_name
+    )
+
+    stats["group_id"] = (
+        group_id
+    )
+
+    period_label = (
+        f"{start_dt.strftime('%d.%m.%Y %H:%M')}"
+        f" - "
+        f"{end_dt.strftime('%d.%m.%Y %H:%M')}"
+    )
+
+    os.makedirs(
+        "reports",
+        exist_ok=True,
+    )
+
+    filename = (
+        f"reports/"
+        f"{group_name}_"
+        f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    )
+
+    await asyncio.to_thread(
+        build_pdf_report,
+        stats,
+        period_label,
+        filename,
+    )
+
+    await callback.message.answer_document(
+        FSInputFile(
+            filename,
+            filename=(
+                f"HISOBOT - "
+                f"{group_name}.pdf"
+            ),
+        ),
+        caption=(
+            f"📊 {group_name}\n"
+            f"📅 {period_label}"
+        ),
+    )
+
+    await state.clear()
+
+    await callback.message.answer(
+        "⚙️ Admin panel",
+        reply_markup=admin_main_menu(),
+    )
+
+    await callback.answer()
