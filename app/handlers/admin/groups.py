@@ -194,7 +194,14 @@ async def groups_list(
             f"{idx}. {status} "
             f"{group.title}\n"
         )
+    kb = InlineKeyboardBuilder()
 
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="groups_menu",
+    )
+
+    kb.adjust(1)
     await callback.message.edit_text(
         text
     )
