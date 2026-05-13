@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from aiogram import (
-    Router,
-    F,
-)
+from aiogram import Router
 
 from aiogram.types import (
     Message,
@@ -16,17 +13,23 @@ from app.database.repositories.groups import (
 router = Router()
 
 
-@router.message(
-    F.chat.type.in_(
-        {"group", "supergroup"}
-    )
-)
+@router.message()
 async def detect_new_group(
     message: Message,
 ):
 
-    if not message.chat:
+    print("AUTO DETECT HIT")
+
+    if message.chat.type not in [
+        "group",
+        "supergroup",
+    ]:
         return
+
+    print(
+        "NEW GROUP:",
+        message.chat.title,
+    )
 
     await create_group_if_not_exists(
         telegram_chat_id=message.chat.id,

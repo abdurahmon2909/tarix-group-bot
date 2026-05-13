@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from aiogram.types import Message
-from aiogram import (
-    Router,
-    F,
+from aiogram import Router
+from aiogram.types import (
+    Message,
 )
+
 from app.database.repositories.groups import (
     is_group_active,
 )
@@ -16,11 +16,7 @@ from app.database.repositories.messages import (
 router = Router()
 
 
-@router.message(
-    F.chat.type.in_(
-        {"group", "supergroup"}
-    )
-)
+@router.message()
 async def track_group_messages(
     message: Message,
 ):
@@ -72,8 +68,7 @@ async def track_group_messages(
             text=message.text or "",
             sent_at=message.date.replace(
                 tzinfo=None
-
-            )
+            ),
         )
 
         print(
