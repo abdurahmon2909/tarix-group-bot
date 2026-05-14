@@ -7,7 +7,9 @@ from aiogram import (
     Bot,
     Dispatcher,
 )
-
+from app.handlers.users.support import (
+    router as support_router,
+)
 from app.config import settings
 
 from app.middlewares.admin import (
