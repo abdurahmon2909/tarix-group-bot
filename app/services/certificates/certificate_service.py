@@ -197,7 +197,7 @@ def generate_certificate(
 
     image.paste(
         qr,
-        (205, 665),
+        (205, 765),
     )
 
     # =====================
