@@ -84,7 +84,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (1330, 120),
+        (1320, 120),
         datetime.now().strftime(
             "%d.%m.%Y"
         ),
@@ -97,7 +97,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (1280, 178),
+        (1290, 174),
         certificate_id,
         fill="#0A1D45",
         font=small_font,
