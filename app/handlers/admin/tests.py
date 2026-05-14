@@ -4,9 +4,6 @@ from aiogram import (
     Router,
     F,
 )
-from app.database.repositories.tests import (
-    count_test_attempts,
-)
 from aiogram.types import (
     CallbackQuery,
     Message,
@@ -14,11 +11,6 @@ from aiogram.types import (
 )
 from app.states.tests import (
     CertificateTemplateStates,
-)
-
-from app.database.repositories.tests import (
-    create_certificate_template,
-    get_certificate_templates,
 )
 from aiogram.fsm.context import (
     FSMContext,
@@ -46,6 +38,12 @@ from app.database.repositories.tests import (
     create_test,
     get_test_results,
     delete_test_by_id,
+
+    count_test_attempts,
+
+    create_certificate_template,
+    get_certificate_templates,
+    get_certificate_template_by_id,
 )
 
 from app.services.reports.test_results_pdf import (
@@ -414,43 +412,48 @@ async def save_answer_key_handler(
         parsed
     )
 
-    # TEMP TEMPLATE ID
-    certificate_template_id = 1
-
-    test = await create_test(
-        folder_id=folder_id,
-        certificate_template_id=(
-            certificate_template_id
-        ),
-        title=test_title,
-        telegram_file_id=(
-            telegram_file_id
-        ),
-        answer_key_json=parsed,
+    await state.update_data(
+        parsed_answers=parsed,
         question_count=question_count,
     )
 
-    await state.clear()
+    templates = (
+        await get_certificate_templates()
+    )
+
+    if not templates:
+        await message.answer(
+            (
+                "❌ Template topilmadi\n\n"
+                "Avval sertifikat "
+                "template yarating"
+            )
+        )
+
+        return
 
     kb = InlineKeyboardBuilder()
 
-    kb.button(
-        text="📚 Testlarim",
-        callback_data="tests_menu",
-    )
+    for template in templates:
+        kb.button(
+            text=f"🏆 {template.name}",
+            callback_data=(
+                f"select_template:{template.id}"
+            ),
+        )
 
     kb.adjust(1)
 
-    await message.answer(
-        (
-            "✅ Test yuklandi\n\n"
+    await state.set_state(
+        CreateTestStates.waiting_for_certificate_template
+    )
 
-            f"📄 {test.title}\n"
-            f"📊 Savollar: "
-            f"{question_count}"
-        ),
+    await message.answer(
+        "🏆 Sertifikat template tanlang",
         reply_markup=kb.as_markup(),
     )
+
+    return
 
 # =========================
 # RESULTS MENU
@@ -1091,3 +1094,80 @@ async def save_signature(
         ),
         reply_markup=kb.as_markup(),
     )
+
+# =========================
+# SELECT TEMPLATE
+# =========================
+
+@router.callback_query(
+    CreateTestStates.waiting_for_certificate_template,
+    F.data.startswith(
+        "select_template:"
+    )
+)
+async def select_template_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    template_id = int(
+        callback.data.split(":")[1]
+    )
+
+    template = (
+        await get_certificate_template_by_id(
+            template_id
+        )
+    )
+
+    if not template:
+
+        await callback.answer(
+            "Template topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    data = await state.get_data()
+
+    test = await create_test(
+        folder_id=data["folder_id"],
+        certificate_template_id=(
+            template.id
+        ),
+        title=data["test_title"],
+        telegram_file_id=(
+            data["telegram_file_id"]
+        ),
+        answer_key_json=(
+            data["parsed_answers"]
+        ),
+        question_count=(
+            data["question_count"]
+        ),
+    )
+
+    await state.clear()
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📚 Testlarim",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            "✅ Test yaratildi\n\n"
+
+            f"📄 {test.title}\n"
+            f"🏆 Template: "
+            f"{template.name}"
+        ),
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
