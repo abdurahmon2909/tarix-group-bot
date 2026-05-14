@@ -4,6 +4,9 @@ from aiogram import (
     Router,
     F,
 )
+from app.database.repositories.users import (
+    get_user_by_telegram_id,
+)
 from aiogram.types import (
     FSInputFile,
 )
@@ -305,7 +308,9 @@ async def check_answers_handler(
             str(uuid.uuid4())[:8]
             .upper()
         )
-
+        user = await get_user_by_telegram_id(
+            message.from_user.id
+        )
         certificate_file = (
             generate_certificate(
                 fullname=user.full_name,
