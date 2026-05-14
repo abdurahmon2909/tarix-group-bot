@@ -7,8 +7,20 @@ from aiogram import (
 
 from aiogram.types import (
     CallbackQuery,
+    Message,
+)
+from aiogram.fsm.context import (
+    FSMContext,
 )
 
+from app.states.tests import (
+    SolveTestStates,
+)
+
+from app.utils.test_parser import (
+    parse_answer_key,
+    compare_answers,
+)
 from aiogram.utils.keyboard import (
     InlineKeyboardBuilder,
 )
@@ -130,6 +142,7 @@ async def open_folder(
 )
 async def open_test(
     callback: CallbackQuery,
+    state: FSMContext,
 ):
 
     test_id = int(
@@ -148,7 +161,15 @@ async def open_test(
         )
 
         return
+    await state.clear()
 
+    await state.update_data(
+        solving_test_id=test.id
+    )
+
+    await state.set_state(
+        SolveTestStates.waiting_for_answers
+    )
     await callback.message.answer_document(
         document=test.telegram_file_id,
         caption=(
@@ -159,3 +180,87 @@ async def open_test(
     )
 
     await callback.answer()
+
+# =========================
+# CHECK ANSWERS
+# =========================
+
+@router.message(
+    SolveTestStates.waiting_for_answers
+)
+async def check_answers_handler(
+    message: Message,
+    state: FSMContext,
+):
+
+    text = (
+        message.text or ""
+    ).strip()
+
+    parsed_answers = parse_answer_key(
+        text
+    )
+
+    if not parsed_answers:
+
+        await message.answer(
+            (
+                "❌ Javoblar topilmadi\n\n"
+                "Misol:\n"
+                "1A2D3C4E5B"
+            )
+        )
+
+        return
+
+    data = await state.get_data()
+
+    test_id = data[
+        "solving_test_id"
+    ]
+
+    test = await get_test_by_id(
+        test_id
+    )
+
+    if not test:
+
+        await state.clear()
+
+        await message.answer(
+            "❌ Test topilmadi"
+        )
+
+        return
+
+    result = compare_answers(
+        correct_answers=(
+            test.answer_key_json
+        ),
+        user_answers=parsed_answers,
+    )
+
+    await state.clear()
+
+    certificate_text = (
+        "🏆 Sertifikat beriladi"
+        if result["percent"] >= 70
+        else "❌ Sertifikat yo‘q"
+    )
+
+    await message.answer(
+        (
+            f"📄 {test.title}\n\n"
+
+            f"✅ To‘g‘ri: "
+            f"{result['correct']}\n"
+
+            f"❌ Noto‘g‘ri: "
+            f"{result['wrong']}\n"
+
+            f"📊 Natija: "
+            f"{result['percent']}%\n\n"
+
+            f"{certificate_text}"
+        )
+    )

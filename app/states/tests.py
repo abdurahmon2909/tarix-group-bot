@@ -17,3 +17,9 @@ class CreateTestStates(
     waiting_for_answer_key = State()
 
     waiting_for_certificate_template = State()
+
+class SolveTestStates(
+    StatesGroup
+):
+
+    waiting_for_answers = State()
