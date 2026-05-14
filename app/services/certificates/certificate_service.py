@@ -55,37 +55,29 @@ def generate_certificate(
     # FONTS
     # =====================
 
-    try:
+    FONT_PATH = (
+            BASE_DIR / "DejaVuSans.ttf"
+    )
 
-        title_font = ImageFont.truetype(
-            "DejaVuSerif-Bold.ttf",
-            120,
-        )
+    title_font = ImageFont.truetype(
+        str(FONT_PATH),
+        120,
+    )
 
-        subtitle_font = ImageFont.truetype(
-            "DejaVuSans-Bold.ttf",
-            42,
-        )
+    subtitle_font = ImageFont.truetype(
+        str(FONT_PATH),
+        42,
+    )
 
-        text_font = ImageFont.truetype(
-            "DejaVuSans.ttf",
-            38,
-        )
+    text_font = ImageFont.truetype(
+        str(FONT_PATH),
+        38,
+    )
 
-        small_font = ImageFont.truetype(
-            "DejaVuSans.ttf",
-            28,
-        )
-
-    except Exception:
-
-        title_font = ImageFont.load_default()
-
-        subtitle_font = ImageFont.load_default()
-
-        text_font = ImageFont.load_default()
-
-        small_font = ImageFont.load_default()
+    small_font = ImageFont.truetype(
+        str(FONT_PATH),
+        28,
+    )
 
     # =====================
     # DATE
