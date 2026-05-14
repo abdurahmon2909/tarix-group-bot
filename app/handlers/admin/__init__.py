@@ -14,13 +14,6 @@ from app.handlers.admin.broadcast import (
     router as broadcast_router,
 )
 
-from app.handlers.admin.support import (
-    router as support_router,
-)
-
-from app.filters.admin import (
-    AdminFilter,
-)
 
 # =========================
 # ADMIN FILTER

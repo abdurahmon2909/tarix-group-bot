@@ -33,7 +33,6 @@ from app.handlers.admin import (
     groups_router,
     reports_router,
     broadcast_router,
-    support_router,
 )
 
 
