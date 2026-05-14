@@ -192,12 +192,12 @@ def generate_certificate(
     )
 
     qr = qr.resize(
-        (170, 170)
+        (160, 160)
     )
 
     image.paste(
         qr,
-        (205, 865),
+        (205, 665),
     )
 
     # =====================
