@@ -372,3 +372,26 @@ async def get_test_results(
         )
 
         return result.scalars().all()
+
+# =========================
+# COUNT TEST ATTEMPTS
+# =========================
+
+async def count_test_attempts(
+    test_id: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(
+                func.count(
+                    TestAttempt.id
+                )
+            ).where(
+                TestAttempt.test_id
+                == test_id
+            )
+        )
+
+        return result.scalar() or 0

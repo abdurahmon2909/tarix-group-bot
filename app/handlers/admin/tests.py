@@ -4,7 +4,9 @@ from aiogram import (
     Router,
     F,
 )
-
+from app.database.repositories.tests import (
+    count_test_attempts,
+)
 from aiogram.types import (
     CallbackQuery,
     Message,
@@ -567,6 +569,334 @@ async def generate_results_pdf(
         caption=(
             f"📊 {test.title}"
         ),
+    )
+
+    await callback.answer()
+
+# =========================
+# DELETE TEST MENU
+# =========================
+
+@router.callback_query(
+    F.data == "delete_test_menu"
+)
+async def delete_test_menu(
+    callback: CallbackQuery,
+):
+
+    folders = await get_root_test_folders()
+
+    kb = InlineKeyboardBuilder()
+
+    for folder in folders:
+
+        kb.button(
+            text=f"📂 {folder.name}",
+            callback_data=(
+                f"delete_folder:{folder.id}"
+            ),
+        )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "🗑 O‘chirish uchun papkani tanlang",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# DELETE FOLDER
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "delete_folder:"
+    )
+)
+async def delete_folder_handler(
+    callback: CallbackQuery,
+):
+
+    folder_id = int(
+        callback.data.split(":")[1]
+    )
+
+    tests = await get_tests_by_folder(
+        folder_id
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    for test in tests:
+
+        kb.button(
+            text=f"❌ {test.title}",
+            callback_data=(
+                f"delete_test:{test.id}"
+            ),
+        )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="delete_test_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "❌ O‘chiriladigan testni tanlang",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# DELETE TEST
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "delete_test:"
+    )
+)
+async def delete_test_handler(
+    callback: CallbackQuery,
+):
+
+    test_id = int(
+        callback.data.split(":")[1]
+    )
+
+    test = await get_test_by_id(
+        test_id
+    )
+
+    if not test:
+
+        await callback.answer(
+            "Test topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    await delete_test_by_id(
+        test_id
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📚 Testlarim",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            f"✅ Test o‘chirildi\n\n"
+            f"{test.title}"
+        ),
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+# =========================
+# EXISTING TESTS
+# =========================
+
+@router.callback_query(
+    F.data == "existing_tests"
+)
+async def existing_tests_menu(
+    callback: CallbackQuery,
+):
+
+    folders = await get_root_test_folders()
+
+    kb = InlineKeyboardBuilder()
+
+    for folder in folders:
+
+        kb.button(
+            text=f"📂 {folder.name}",
+            callback_data=(
+                f"existing_folder:{folder.id}"
+            ),
+        )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "📂 Mavjud testlar",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# EXISTING FOLDER
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "existing_folder:"
+    )
+)
+async def existing_folder_handler(
+    callback: CallbackQuery,
+):
+
+    folder_id = int(
+        callback.data.split(":")[1]
+    )
+
+    child_folders = (
+        await get_child_folders(
+            folder_id
+        )
+    )
+
+    tests = await get_tests_by_folder(
+        folder_id
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    for folder in child_folders:
+
+        kb.button(
+            text=f"📂 {folder.name}",
+            callback_data=(
+                f"existing_folder:{folder.id}"
+            ),
+        )
+
+    for test in tests:
+
+        attempts = (
+            await count_test_attempts(
+                test.id
+            )
+        )
+
+        kb.button(
+            text=(
+                f"📄 {test.title}"
+                f" ({attempts})"
+            ),
+            callback_data=(
+                f"show_test:{test.id}"
+            ),
+        )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="existing_tests",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "📂 Papka ichidagi testlar",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# SHOW TEST
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "show_test:"
+    )
+)
+async def show_test_handler(
+    callback: CallbackQuery,
+):
+
+    test_id = int(
+        callback.data.split(":")[1]
+    )
+
+    test = await get_test_by_id(
+        test_id
+    )
+
+    if not test:
+
+        await callback.answer(
+            "Test topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    attempts = (
+        await count_test_attempts(
+            test.id
+        )
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📊 Natijalar",
+        callback_data=(
+            f"results_test:{test.id}"
+        ),
+    )
+
+    kb.button(
+        text="🗑 O‘chirish",
+        callback_data=(
+            f"delete_test:{test.id}"
+        ),
+    )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data=(
+            f"existing_folder:{test.folder_id}"
+        ),
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            f"📄 {test.title}\n\n"
+
+            f"📊 Savollar: "
+            f"{test.question_count}\n"
+
+            f"📝 Urinishlar: "
+            f"{attempts}\n"
+
+            f"🟢 Aktiv: "
+            f"{'Ha' if test.is_active else 'Yo‘q'}"
+        ),
+        reply_markup=kb.as_markup(),
     )
 
     await callback.answer()
