@@ -144,7 +144,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (650, 660),
+        (645, 660),
         f"{score_percent}%",
         fill="#B8860B",
         font=subtitle_font,
