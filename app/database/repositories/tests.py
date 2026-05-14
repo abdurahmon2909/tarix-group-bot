@@ -3,7 +3,13 @@ from __future__ import annotations
 from sqlalchemy import (
     select,
 )
+from sqlalchemy.orm import (
+    selectinload,
+)
 
+from app.database.models.test_attempt import (
+    TestAttempt,
+)
 from app.database.db import (
     async_session,
 )
@@ -338,3 +344,31 @@ async def create_certificate(
         await session.refresh(certificate)
 
         return certificate
+
+# =========================
+# GET TEST RESULTS
+# =========================
+
+async def get_test_results(
+    test_id: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(TestAttempt)
+            .options(
+                selectinload(
+                    TestAttempt.user
+                )
+            )
+            .where(
+                TestAttempt.test_id
+                == test_id
+            )
+            .order_by(
+                TestAttempt.score_percent.desc()
+            )
+        )
+
+        return result.scalars().all()

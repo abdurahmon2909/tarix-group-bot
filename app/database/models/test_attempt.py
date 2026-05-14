@@ -14,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
+    relationship,
 )
 
 from app.database.base import Base
@@ -73,4 +74,7 @@ class TestAttempt(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
+    )
+    user = relationship(
+        "User"
     )
