@@ -37,10 +37,6 @@ broadcast_router.message.filter(
     AdminFilter()
 )
 
-support_router.message.filter(
-    AdminFilter()
-)
-
 panel_router.callback_query.filter(
     AdminFilter()
 )
@@ -54,9 +50,5 @@ reports_router.callback_query.filter(
 )
 
 broadcast_router.callback_query.filter(
-    AdminFilter()
-)
-
-support_router.callback_query.filter(
     AdminFilter()
 )
