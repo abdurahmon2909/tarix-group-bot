@@ -319,3 +319,37 @@ async def profile_callback(
     )
 
     await callback.answer()
+
+# =========================
+# BACK MAIN MENU
+# =========================
+
+@router.callback_query(
+    F.data == "back_main_menu"
+)
+async def back_main_menu(
+    callback: CallbackQuery,
+):
+
+    is_admin = (
+        callback.from_user.id
+        in settings.ADMINS
+    )
+
+    if is_admin:
+
+        await callback.message.edit_text(
+            "⚙️ Admin panel",
+            reply_markup=admin_main_menu(),
+        )
+
+        await callback.answer()
+
+        return
+
+    await callback.message.edit_text(
+        "🏠 Asosiy menyu",
+        reply_markup=user_main_menu(),
+    )
+
+    await callback.answer()

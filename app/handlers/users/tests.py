@@ -75,7 +75,10 @@ async def tests_menu(
                 f"user_folder:{folder.id}"
             ),
         )
-
+    kb.button(
+        text="⬅️ Asosiy menu",
+        callback_data="back_main_menu",
+    )
     kb.adjust(1)
 
     await callback.message.edit_text(
@@ -357,6 +360,19 @@ async def check_answers_handler(
             certificate_generated
         ),
     )
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📚 Testlar",
+        callback_data="user_tests_menu",
+    )
+
+    kb.button(
+        text="🏠 Asosiy menu",
+        callback_data="back_main_menu",
+    )
+
+    kb.adjust(1)
     await message.answer(
         (
             f"📄 {test.title}\n\n"
@@ -377,7 +393,8 @@ async def check_answers_handler(
             f"{duration_seconds} sec\n\n"
 
             f"{certificate_text}"
-        )
+        ),
+        reply_markup=kb.as_markup(),
     )
 
     if certificate_file:
