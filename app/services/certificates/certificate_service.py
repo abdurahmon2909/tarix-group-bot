@@ -56,7 +56,7 @@ def generate_certificate(
     # =====================
 
     FONT_PATH = (
-            BASE_DIR / "DejaVuSans.ttf"
+            BASE_DIR / "NotoSans-Regular.ttf"
     )
 
     title_font = ImageFont.truetype(
