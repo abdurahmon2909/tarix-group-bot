@@ -16,6 +16,12 @@ def admin_main_menu():
             ],
             [
                 InlineKeyboardButton(
+                    text="📚 Testlarim",
+                    callback_data="tests_menu",
+                )
+            ],
+            [
+                InlineKeyboardButton(
                     text="📊 Report",
                     callback_data="reports_menu",
                 )

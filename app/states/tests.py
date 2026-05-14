@@ -1,0 +1,19 @@
+from aiogram.fsm.state import (
+    StatesGroup,
+    State,
+)
+
+
+class CreateTestStates(
+    StatesGroup
+):
+
+    waiting_for_folder_name = State()
+
+    waiting_for_test_title = State()
+
+    waiting_for_pdf = State()
+
+    waiting_for_answer_key = State()
+
+    waiting_for_certificate_template = State()

@@ -35,6 +35,7 @@ from app.handlers.admin import (
     groups_router,
     reports_router,
     broadcast_router,
+    tests_router,
 )
 
 
@@ -98,7 +99,9 @@ dp.include_router(
 dp.include_router(
     broadcast_router
 )
-
+dp.include_router(
+    tests_router
+)
 # SUPPORT
 dp.include_router(
     support_router

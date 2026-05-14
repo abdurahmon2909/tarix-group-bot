@@ -15,7 +15,9 @@ from app.handlers.admin.reports import (
 from app.handlers.admin.broadcast import (
     router as broadcast_router,
 )
-
+from app.handlers.admin.tests import (
+    router as tests_router,
+)
 
 # =========================
 # ADMIN FILTER
@@ -50,5 +52,12 @@ reports_router.callback_query.filter(
 )
 
 broadcast_router.callback_query.filter(
+    AdminFilter()
+)
+tests_router.message.filter(
+    AdminFilter()
+)
+
+tests_router.callback_query.filter(
     AdminFilter()
 )
