@@ -81,7 +81,7 @@ async def build_profile_text(
         f"📎 Username: "
         f"<b>{username}</b>\n\n"
 
-        f"💬 Jami xabarlar: "
+        f"💬 Guruhdagi jami xabarlar: "
         f"<b>{user_messages}</b>\n"
 
         f"📊 Faollik ulushi: "
