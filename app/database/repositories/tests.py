@@ -6,7 +6,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     selectinload,
 )
-
+from app.database.models.certificate_template import (
+    CertificateTemplate,
+)
 from app.database.models.test_attempt import (
     TestAttempt,
 )
@@ -395,3 +397,72 @@ async def count_test_attempts(
         )
 
         return result.scalar() or 0
+
+# =========================
+# CREATE CERTIFICATE TEMPLATE
+# =========================
+
+async def create_certificate_template(
+    name: str,
+    background_image_file_id: str,
+    signature_image_file_id: str,
+):
+
+    async with async_session() as session:
+
+        template = CertificateTemplate(
+            name=name,
+            background_image_file_id=(
+                background_image_file_id
+            ),
+            signature_image_file_id=(
+                signature_image_file_id
+            ),
+        )
+
+        session.add(template)
+
+        await session.commit()
+
+        await session.refresh(template)
+
+        return template
+
+
+# =========================
+# GET CERTIFICATE TEMPLATES
+# =========================
+
+async def get_certificate_templates():
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(
+                CertificateTemplate
+            )
+        )
+
+        return result.scalars().all()
+
+
+# =========================
+# GET TEMPLATE BY ID
+# =========================
+
+async def get_certificate_template_by_id(
+    template_id: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(
+                CertificateTemplate
+            ).where(
+                CertificateTemplate.id
+                == template_id
+            )
+        )
+
+        return result.scalar_one_or_none()

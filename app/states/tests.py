@@ -23,3 +23,13 @@ class SolveTestStates(
 ):
 
     waiting_for_answers = State()
+
+class CertificateTemplateStates(
+    StatesGroup
+):
+
+    waiting_for_template_name = State()
+
+    waiting_for_background = State()
+
+    waiting_for_signature = State()

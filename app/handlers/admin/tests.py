@@ -12,7 +12,14 @@ from aiogram.types import (
     Message,
     FSInputFile,
 )
+from app.states.tests import (
+    CertificateTemplateStates,
+)
 
+from app.database.repositories.tests import (
+    create_certificate_template,
+    get_certificate_templates,
+)
 from aiogram.fsm.context import (
     FSMContext,
 )
@@ -900,3 +907,187 @@ async def show_test_handler(
     )
 
     await callback.answer()
+
+# =========================
+# CERTIFICATE MENU
+# =========================
+
+@router.callback_query(
+    F.data == "certificate_templates"
+)
+async def certificate_templates_menu(
+    callback: CallbackQuery,
+):
+
+    templates = (
+        await get_certificate_templates()
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="➕ Template qo‘shish",
+        callback_data="add_certificate_template",
+    )
+
+    for template in templates:
+
+        kb.button(
+            text=f"🏆 {template.name}",
+            callback_data=(
+                f"show_template:{template.id}"
+            ),
+        )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "🏆 Sertifikat shablonlari",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# ADD TEMPLATE
+# =========================
+
+@router.callback_query(
+    F.data == "add_certificate_template"
+)
+async def add_template_callback(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    await state.set_state(
+        CertificateTemplateStates.waiting_for_template_name
+    )
+
+    await callback.message.edit_text(
+        "✍️ Template nomini yuboring"
+    )
+
+    await callback.answer()
+
+
+# =========================
+# SAVE TEMPLATE NAME
+# =========================
+
+@router.message(
+    CertificateTemplateStates.waiting_for_template_name
+)
+async def save_template_name(
+    message: Message,
+    state: FSMContext,
+):
+
+    text = (
+        message.text or ""
+    ).strip()
+
+    if len(text) < 2:
+
+        await message.answer(
+            "❌ Nomi juda qisqa"
+        )
+
+        return
+
+    await state.update_data(
+        template_name=text
+    )
+
+    await state.set_state(
+        CertificateTemplateStates.waiting_for_background
+    )
+
+    await message.answer(
+        "🖼 Background image yuboring"
+    )
+
+
+# =========================
+# SAVE BACKGROUND
+# =========================
+
+@router.message(
+    CertificateTemplateStates.waiting_for_background,
+    F.photo
+)
+async def save_background(
+    message: Message,
+    state: FSMContext,
+):
+
+    photo = message.photo[-1]
+
+    await state.update_data(
+        background_file_id=photo.file_id
+    )
+
+    await state.set_state(
+        CertificateTemplateStates.waiting_for_signature
+    )
+
+    await message.answer(
+        "✍️ Signature image yuboring"
+    )
+
+
+# =========================
+# SAVE SIGNATURE
+# =========================
+
+@router.message(
+    CertificateTemplateStates.waiting_for_signature,
+    F.photo
+)
+async def save_signature(
+    message: Message,
+    state: FSMContext,
+):
+
+    photo = message.photo[-1]
+
+    data = await state.get_data()
+
+    template = (
+        await create_certificate_template(
+            name=data["template_name"],
+            background_image_file_id=(
+                data["background_file_id"]
+            ),
+            signature_image_file_id=(
+                photo.file_id
+            ),
+        )
+    )
+
+    await state.clear()
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="🏆 Sertifikatlar",
+        callback_data=(
+            "certificate_templates"
+        ),
+    )
+
+    kb.adjust(1)
+
+    await message.answer(
+        (
+            f"✅ Template yaratildi\n\n"
+            f"{template.name}"
+        ),
+        reply_markup=kb.as_markup(),
+    )
