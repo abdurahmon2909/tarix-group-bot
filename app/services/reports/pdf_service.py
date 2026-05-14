@@ -408,6 +408,364 @@ def build_pdf_report(
         Spacer(1, 8)
     )
 
+    # =========================
+    # CATEGORY SUMMARY
+    # =========================
+
+    category_counts = {
+        "Faol": 0,
+        "Yaxshi": 0,
+        "O'rtacha": 0,
+        "Qoniqarli": 0,
+    }
+
+    for u in users:
+
+        cat = u.get(
+            "category",
+            "Qoniqarli",
+        )
+
+        if cat in category_counts:
+            category_counts[cat] += 1
+
+    total_users = len(users)
+
+    faol_percent = (
+        category_counts["Faol"]
+        / total_users
+        * 100
+    ) if total_users else 0
+
+    yaxshi_percent = (
+        category_counts["Yaxshi"]
+        / total_users
+        * 100
+    ) if total_users else 0
+
+    ortacha_percent = (
+        category_counts["O'rtacha"]
+        / total_users
+        * 100
+    ) if total_users else 0
+
+    qoniqarli_percent = (
+        category_counts["Qoniqarli"]
+        / total_users
+        * 100
+    ) if total_users else 0
+
+    summary_data = [
+        [
+            Paragraph(
+                "Faol",
+                style_box_title,
+            ),
+            Paragraph(
+                "Yaxshi",
+                style_box_title,
+            ),
+            Paragraph(
+                "O'rtacha",
+                style_box_title,
+            ),
+            Paragraph(
+                "Qoniqarli",
+                style_box_title,
+            ),
+        ],
+        [
+            Paragraph(
+                (
+                    f"{category_counts['Faol']} "
+                    f"({faol_percent:.1f}%)"
+                ),
+                style_box_value,
+            ),
+
+            Paragraph(
+                (
+                    f"{category_counts['Yaxshi']} "
+                    f"({yaxshi_percent:.1f}%)"
+                ),
+                style_box_value,
+            ),
+
+            Paragraph(
+                (
+                        str(
+                            category_counts["O'rtacha"]
+                        )
+                        + f" ({ortacha_percent:.1f}%)"
+                ),
+                style_box_value,
+            ),
+
+            Paragraph(
+                (
+                    f"{category_counts['Qoniqarli']} "
+                    f"({qoniqarli_percent:.1f}%)"
+                ),
+                style_box_value,
+            ),
+        ],
+    ]
+
+    summary_table = Table(
+        summary_data,
+        colWidths=[
+            43 * mm,
+            43 * mm,
+            43 * mm,
+            43 * mm,
+        ],
+    )
+
+    summary_table.setStyle(
+        TableStyle([
+            (
+                "BACKGROUND",
+                (0, 0),
+                (0, 1),
+                colors.HexColor(
+                    "#0b8f55"
+                ),
+            ),
+            (
+                "BACKGROUND",
+                (1, 0),
+                (1, 1),
+                colors.HexColor(
+                    "#1e88e5"
+                ),
+            ),
+            (
+                "BACKGROUND",
+                (2, 0),
+                (2, 1),
+                colors.HexColor(
+                    "#f9a825"
+                ),
+            ),
+            (
+                "BACKGROUND",
+                (3, 0),
+                (3, 1),
+                colors.HexColor(
+                    "#8d6e63"
+                ),
+            ),
+            (
+                "BOX",
+                (0, 0),
+                (-1, -1),
+                0.8,
+                colors.white,
+            ),
+            (
+                "INNERGRID",
+                (0, 0),
+                (-1, -1),
+                0.8,
+                colors.white,
+            ),
+            (
+                "VALIGN",
+                (0, 0),
+                (-1, -1),
+                "MIDDLE",
+            ),
+            (
+                "ALIGN",
+                (0, 0),
+                (-1, -1),
+                "CENTER",
+            ),
+            (
+                "TOPPADDING",
+                (0, 0),
+                (-1, -1),
+                8,
+            ),
+            (
+                "BOTTOMPADDING",
+                (0, 0),
+                (-1, -1),
+                8,
+            ),
+        ])
+    )
+
+    story.append(
+        summary_table
+    )
+
+    story.append(
+        Spacer(1, 10)
+    )
+
+    # =========================
+    # TOP 3 USERS
+    # =========================
+
+    if users:
+
+        top3 = users[:3]
+
+        top3_rows = [[
+            Paragraph(
+                "<b>TOP</b>",
+                styles["Normal"],
+            ),
+            Paragraph(
+                "<b>Ism</b>",
+                styles["Normal"],
+            ),
+            Paragraph(
+                "<b>Xabarlar</b>",
+                styles["Normal"],
+            ),
+            Paragraph(
+                "<b>Ulush %</b>",
+                styles["Normal"],
+            ),
+            Paragraph(
+                "<b>Toifa</b>",
+                styles["Normal"],
+            ),
+        ]]
+
+        medals = [
+            "🥇 1",
+            "🥈 2",
+            "🥉 3",
+        ]
+
+        for i, u in enumerate(top3):
+
+            top3_rows.append([
+                medals[i],
+                _safe(
+                    u["full_name"]
+                ),
+                str(
+                    u["msg_count"]
+                ),
+                str(
+                    u["share_percent"]
+                ),
+                _safe(
+                    u["category"]
+                ),
+            ])
+
+        top3_table = Table(
+            top3_rows,
+            colWidths=[
+                18 * mm,
+                90 * mm,
+                28 * mm,
+                28 * mm,
+                32 * mm,
+            ],
+        )
+
+        top3_style = [
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 0),
+                colors.HexColor(
+                    "#123b5d"
+                ),
+            ),
+            (
+                "TEXTCOLOR",
+                (0, 0),
+                (-1, 0),
+                colors.white,
+            ),
+            (
+                "FONTNAME",
+                (0, 0),
+                (-1, 0),
+                "Helvetica-Bold",
+            ),
+            (
+                "GRID",
+                (0, 0),
+                (-1, -1),
+                0.5,
+                colors.grey,
+            ),
+            (
+                "VALIGN",
+                (0, 0),
+                (-1, -1),
+                "MIDDLE",
+            ),
+            (
+                "FONTSIZE",
+                (0, 0),
+                (-1, -1),
+                9,
+            ),
+        ]
+
+        for row_idx, u in enumerate(
+            top3,
+            start=1,
+        ):
+
+            bg = get_category_color(
+                u["category"]
+            )
+
+            top3_style.append(
+                (
+                    "BACKGROUND",
+                    (0, row_idx),
+                    (-1, row_idx),
+                    bg,
+                )
+            )
+
+        top3_table.setStyle(
+            TableStyle(
+                top3_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                "<b>Eng faol 3 ishtirokchi</b>",
+                styles["Heading3"],
+            )
+        )
+
+        story.append(
+            top3_table
+        )
+
+        story.append(
+            Spacer(1, 10)
+        )
+
+    # =========================
+    # TABLE TITLE
+    # =========================
+
+    story.append(
+        Paragraph(
+            "<b>Batafsil jadval</b>",
+            styles["Heading3"],
+        )
+    )
+
+    story.append(
+        Spacer(1, 5)
+    )
+
     data = [[
         "No",
         "Ism",
