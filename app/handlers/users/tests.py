@@ -308,9 +308,7 @@ async def check_answers_handler(
 
         certificate_file = (
             generate_certificate(
-                fullname=(
-                    message.from_user.full_name
-                ),
+                fullname=user.full_name,
                 test_name=test.title,
                 score_percent=(
                     result["percent"]
