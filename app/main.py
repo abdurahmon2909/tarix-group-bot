@@ -15,7 +15,9 @@ from app.config import settings
 from app.middlewares.admin import (
     AdminMiddleware,
 )
-
+from app.handlers.users.tests import (
+    router as tests_router,
+)
 from app.services.groups.cache import (
     refresh_groups_cache,
 )

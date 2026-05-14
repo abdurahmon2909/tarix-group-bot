@@ -16,8 +16,8 @@ def user_main_menu():
                 ),
 
                 InlineKeyboardButton(
-                    text="📄 Test tekshirish",
-                    callback_data="check_test",
+                    text="📄 Testlar",
+                    callback_data="tests_menu",
                 ),
             ],
 
