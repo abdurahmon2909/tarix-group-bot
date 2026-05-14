@@ -49,6 +49,8 @@ def generate_certificate(
         image
     )
 
+    width, height = image.size
+
     # =====================
     # FONTS
     # =====================
@@ -56,36 +58,81 @@ def generate_certificate(
     try:
 
         title_font = ImageFont.truetype(
+            "DejaVuSerif-Bold.ttf",
+            120,
+        )
+
+        subtitle_font = ImageFont.truetype(
             "DejaVuSans-Bold.ttf",
-            70,
+            42,
         )
 
         text_font = ImageFont.truetype(
             "DejaVuSans.ttf",
-            32,
+            38,
         )
 
         small_font = ImageFont.truetype(
             "DejaVuSans.ttf",
-            24,
+            28,
         )
 
     except Exception:
 
         title_font = ImageFont.load_default()
 
+        subtitle_font = ImageFont.load_default()
+
         text_font = ImageFont.load_default()
 
         small_font = ImageFont.load_default()
 
     # =====================
-    # FULLNAME
+    # DATE
     # =====================
 
     draw.text(
-        (420, 420),
-        fullname,
+        (1370, 118),
+        datetime.now().strftime(
+            "%d.%m.%Y"
+        ),
         fill="#0A1D45",
+        font=small_font,
+    )
+
+    # =====================
+    # CERTIFICATE ID
+    # =====================
+
+    draw.text(
+        (1350, 175),
+        certificate_id,
+        fill="#0A1D45",
+        font=small_font,
+    )
+
+    # =====================
+    # FULLNAME
+    # =====================
+
+    bbox = draw.textbbox(
+        (0, 0),
+        fullname,
+        font=title_font,
+    )
+
+    text_width = (
+        bbox[2] - bbox[0]
+    )
+
+    x = (
+        width - text_width
+    ) // 2
+
+    draw.text(
+        (x, 395),
+        fullname,
+        fill="#091C43",
         font=title_font,
     )
 
@@ -94,9 +141,9 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (350, 680),
-        test_name,
-        fill="#111111",
+        (330, 705),
+        test_name[:28],
+        fill="#091C43",
         font=text_font,
     )
 
@@ -105,10 +152,10 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (760, 680),
+        (700, 705),
         f"{score_percent}%",
         fill="#B8860B",
-        font=text_font,
+        font=subtitle_font,
     )
 
     # =====================
@@ -116,12 +163,12 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (1040, 680),
+        (1035, 705),
         (
             f"{correct_answers}"
             f"/{question_count}"
         ),
-        fill="#111111",
+        fill="#091C43",
         font=text_font,
     )
 
@@ -138,34 +185,10 @@ def generate_certificate(
     )
 
     draw.text(
-        (1320, 680),
+        (1330, 705),
         f"{minutes}:{seconds:02}",
-        fill="#111111",
+        fill="#B8860B",
         font=text_font,
-    )
-
-    # =====================
-    # DATE
-    # =====================
-
-    draw.text(
-        (1290, 120),
-        datetime.now().strftime(
-            "%d.%m.%Y"
-        ),
-        fill="#111111",
-        font=small_font,
-    )
-
-    # =====================
-    # CERTIFICATE ID
-    # =====================
-
-    draw.text(
-        (1260, 170),
-        certificate_id,
-        fill="#111111",
-        font=small_font,
     )
 
     # =====================
@@ -173,19 +196,16 @@ def generate_certificate(
     # =====================
 
     qr = qrcode.make(
-        (
-            "https://t.me/"
-            "your_bot_username"
-        )
+        certificate_id
     )
 
     qr = qr.resize(
-        (180, 180)
+        (170, 170)
     )
 
     image.paste(
         qr,
-        (230, 840),
+        (205, 865),
     )
 
     # =====================
