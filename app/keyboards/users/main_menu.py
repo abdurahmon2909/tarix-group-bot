@@ -36,7 +36,7 @@ def user_main_menu():
             [
                 InlineKeyboardButton(
                     text=(
-                        "💬 Fazliddin Burxonov "
+                        "📱 Fazliddin Burxonov "
                         "(shaxsiy)"
                     ),
                     url="https://t.me/Fazliddin_Burxonov",
