@@ -61,7 +61,7 @@ def generate_certificate(
 
     title_font = ImageFont.truetype(
         str(FONT_PATH),
-        64,
+        72,
     )
 
     subtitle_font = ImageFont.truetype(
@@ -124,7 +124,7 @@ def generate_certificate(
     draw.text(
         (x, 430),
         fullname,
-        fill="#B8860B",
+        fill="#091C43",
         font=title_font,
     )
 
@@ -135,7 +135,7 @@ def generate_certificate(
     draw.text(
         (315, 660),
         test_name[:28],
-        fill="#091C43",
+        fill="#B8860B",
         font=small_font,
     )
 
