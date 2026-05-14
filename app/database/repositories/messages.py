@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import (
     select,
 )
-
+from sqlalchemy import func
 from app.database.db import (
     async_session,
 )
@@ -71,3 +71,41 @@ async def get_messages_in_range(
         )
 
         return result.scalars().all()
+
+# =========================
+# USER TOTAL MESSAGES
+# =========================
+
+async def get_user_total_messages(
+    telegram_user_id: int,
+) -> int:
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(
+                func.count(Message.id)
+            ).where(
+                Message.telegram_user_id
+                == telegram_user_id
+            )
+        )
+
+        return result.scalar() or 0
+
+
+# =========================
+# ALL TOTAL MESSAGES
+# =========================
+
+async def get_all_total_messages() -> int:
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(
+                func.count(Message.id)
+            )
+        )
+
+        return result.scalar() or 0

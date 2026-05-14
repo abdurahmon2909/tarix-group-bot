@@ -6,7 +6,9 @@ from aiogram import (
     Router,
     F,
 )
-
+from app.services.users.profile_service import (
+    build_profile_text,
+)
 from aiogram.filters import (
     CommandStart,
 )
@@ -288,6 +290,29 @@ async def change_name_callback(
             "✍️ Yangi ism familiyangizni "
             "kiriting:"
         )
+    )
+
+    await callback.answer()
+
+# =========================
+# PROFILE
+# =========================
+
+@router.callback_query(
+    F.data == "profile"
+)
+async def profile_callback(
+    callback: CallbackQuery,
+):
+
+    text = await build_profile_text(
+        callback.from_user.id
+    )
+
+    await callback.message.answer(
+        text,
+        parse_mode="HTML",
+        reply_markup=user_main_menu(),
     )
 
     await callback.answer()
