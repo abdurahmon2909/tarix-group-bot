@@ -4,33 +4,43 @@ from aiogram import (
     Router,
     F,
 )
-from app.utils.test_parser import (
-    parse_answer_key,
-)
+
 from aiogram.types import (
     CallbackQuery,
     Message,
-    Document,
+    FSInputFile,
 )
 
 from aiogram.fsm.context import (
     FSMContext,
 )
 
+from aiogram.utils.keyboard import (
+    InlineKeyboardBuilder,
+)
+
 from app.states.tests import (
     CreateTestStates,
+)
+
+from app.utils.test_parser import (
+    parse_answer_key,
 )
 
 from app.database.repositories.tests import (
     create_test_folder,
     get_root_test_folders,
+    get_child_folders,
     get_folder_by_id,
+    get_tests_by_folder,
+    get_test_by_id,
     create_test,
+    get_test_results,
+    delete_test_by_id,
 )
 
-
-from aiogram.utils.keyboard import (
-    InlineKeyboardBuilder,
+from app.services.reports.test_results_pdf import (
+    build_test_results_pdf,
 )
 
 router = Router()
@@ -432,3 +442,131 @@ async def save_answer_key_handler(
         ),
         reply_markup=kb.as_markup(),
     )
+
+# =========================
+# RESULTS MENU
+# =========================
+
+@router.callback_query(
+    F.data == "tests_results"
+)
+async def tests_results_menu(
+    callback: CallbackQuery,
+):
+
+    folders = await get_root_test_folders()
+
+    kb = InlineKeyboardBuilder()
+
+    for folder in folders:
+
+        kb.button(
+            text=f"📂 {folder.name}",
+            callback_data=(
+                f"results_folder:{folder.id}"
+            ),
+        )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "📊 Natijalar bo‘limi",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# RESULTS FOLDER
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "results_folder:"
+    )
+)
+async def results_folder_handler(
+    callback: CallbackQuery,
+):
+
+    folder_id = int(
+        callback.data.split(":")[1]
+    )
+
+    tests = await get_tests_by_folder(
+        folder_id
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    for test in tests:
+
+        kb.button(
+            text=f"📄 {test.title}",
+            callback_data=(
+                f"results_test:{test.id}"
+            ),
+        )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        "📄 Testni tanlang",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# GENERATE RESULTS PDF
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "results_test:"
+    )
+)
+async def generate_results_pdf(
+    callback: CallbackQuery,
+):
+
+    test_id = int(
+        callback.data.split(":")[1]
+    )
+
+    test = await get_test_by_id(
+        test_id
+    )
+
+    if not test:
+
+        await callback.answer(
+            "Test topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    results = await get_test_results(
+        test_id
+    )
+
+    pdf_path = (
+        build_test_results_pdf(
+            test_title=test.title,
+            results=results,
+        )
+    )
+
+    await callback.message.answer_document(
+        document=FSInputFile(
+            str(pdf_path)
+        ),
+        caption=(
+            f"📊 {test.title}"
+        ),
+    )
+
+    await callback.answer()
