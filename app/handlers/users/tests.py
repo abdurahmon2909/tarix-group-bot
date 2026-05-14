@@ -4,6 +4,15 @@ from aiogram import (
     Router,
     F,
 )
+from aiogram.types import (
+    FSInputFile,
+)
+
+from app.services.certificates.certificate_service import (
+    generate_certificate,
+)
+
+import uuid
 from datetime import datetime
 from aiogram.types import (
     CallbackQuery,
@@ -287,7 +296,37 @@ async def check_answers_handler(
     certificate_generated = (
             result["percent"] >= 70
     )
+    certificate_file = None
 
+    if certificate_generated:
+        certificate_id = (
+            str(uuid.uuid4())[:8]
+            .upper()
+        )
+
+        certificate_file = (
+            generate_certificate(
+                fullname=(
+                    message.from_user.full_name
+                ),
+                test_name=test.title,
+                score_percent=(
+                    result["percent"]
+                ),
+                correct_answers=(
+                    result["correct"]
+                ),
+                question_count=(
+                    test.question_count
+                ),
+                duration_seconds=(
+                    duration_seconds
+                ),
+                certificate_id=(
+                    certificate_id
+                ),
+            )
+        )
     await create_test_attempt(
         user_id=user_db_id,
         test_id=test.id,
@@ -335,3 +374,15 @@ async def check_answers_handler(
             f"{certificate_text}"
         )
     )
+
+    if certificate_file:
+        await message.answer_document(
+            document=FSInputFile(
+                path=str(
+                    certificate_file
+                )
+            ),
+            caption=(
+                "🏆 Sertifikatingiz tayyor!"
+            ),
+        )
