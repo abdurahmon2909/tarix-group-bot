@@ -5,7 +5,9 @@ from app.handlers.admin.panel import (
 from app.handlers.admin.groups import (
     router as groups_router,
 )
-
+from app.filters.admin import (
+    AdminFilter,
+)
 from app.handlers.admin.reports import (
     router as reports_router,
 )
