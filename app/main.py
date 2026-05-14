@@ -16,7 +16,7 @@ from app.middlewares.admin import (
     AdminMiddleware,
 )
 from app.handlers.users.tests import (
-    router as tests_router,
+    router as user_tests_router,
 )
 from app.services.groups.cache import (
     refresh_groups_cache,
@@ -102,7 +102,7 @@ dp.include_router(
     broadcast_router
 )
 dp.include_router(
-    tests_router
+    user_tests_router
 )
 # SUPPORT
 dp.include_router(
