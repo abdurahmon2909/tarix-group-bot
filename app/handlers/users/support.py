@@ -6,11 +6,20 @@ from aiogram import (
 )
 
 from aiogram.types import (
+    CallbackQuery,
     Message,
 )
 
-from app.utils.admin import (
-    is_admin,
+from aiogram.fsm.context import (
+    FSMContext,
+)
+
+from app.config import (
+    settings,
+)
+
+from app.states.support import (
+    SupportStates,
 )
 
 from app.database.repositories.support import (
@@ -18,29 +27,69 @@ from app.database.repositories.support import (
     get_user_id_by_forwarded_message,
 )
 
+from app.utils.admin import (
+    is_admin,
+)
+
+from app.keyboards.users import (
+    user_main_menu,
+)
+
 router = Router()
 
 
 # =========================
-# USER -> ADMIN
+# OPEN SUPPORT
+# =========================
+
+@router.callback_query(
+    F.data == "support"
+)
+async def support_callback(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    await state.set_state(
+        SupportStates.waiting_for_message
+    )
+
+    await callback.message.answer(
+        (
+            "📨 Ustozga yubormoqchi "
+            "bo‘lgan xabaringizni yozing"
+        )
+    )
+
+    await callback.answer()
+
+
+# =========================
+# USER -> ADMINS
 # =========================
 
 @router.message(
-    F.chat.type == "private"
+    SupportStates.waiting_for_message
 )
-async def forward_user_message(
+async def support_message_handler(
     message: Message,
+    state: FSMContext,
 ):
 
     if not message.from_user:
         return
 
-    if is_admin(
-        message.from_user.id
-    ):
-        return
+    text = (
+        message.text or ""
+    ).strip()
 
-    from app.config import settings
+    if not text:
+
+        await message.answer(
+            "❌ Xabar bo‘sh bo‘lmasin"
+        )
+
+        return
 
     for admin_id in settings.ADMINS:
 
@@ -63,13 +112,23 @@ async def forward_user_message(
                 f"Forward error: {e}"
             )
 
+    await state.clear()
+
+    await message.answer(
+        (
+            "✅ Xabaringiz ustozga "
+            "yuborildi"
+        ),
+        reply_markup=user_main_menu(),
+    )
+
 
 # =========================
 # ADMIN -> USER
 # =========================
 
 @router.message(
-    F.chat.type == "private"
+    F.reply_to_message
 )
 async def admin_reply_handler(
     message: Message,
@@ -81,9 +140,6 @@ async def admin_reply_handler(
     if not is_admin(
         message.from_user.id
     ):
-        return
-
-    if not message.reply_to_message:
         return
 
     original_message_id = (
@@ -103,6 +159,10 @@ async def admin_reply_handler(
 
         await message.copy_to(
             chat_id=target_user_id
+        )
+
+        await message.answer(
+            "✅ Yuborildi"
         )
 
     except Exception as e:
