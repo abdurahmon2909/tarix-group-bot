@@ -136,7 +136,7 @@ def generate_certificate(
         (315, 650),
         test_name[:28],
         fill="#091C43",
-        font=text_font,
+        font=small_font,
     )
 
     # =====================
@@ -155,7 +155,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (980, 650),
+        (950, 670),
         (
             f"{correct_answers}"
             f"/{question_count}"
