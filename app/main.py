@@ -102,6 +102,9 @@ dp.include_router(
     broadcast_router
 )
 dp.include_router(
+    tests_router
+)
+dp.include_router(
     user_tests_router
 )
 # SUPPORT
