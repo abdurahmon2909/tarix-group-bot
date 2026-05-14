@@ -124,7 +124,7 @@ def generate_certificate(
     draw.text(
         (x, 430),
         fullname,
-        fill="#091C43",
+        fill="#B8860B",
         font=title_font,
     )
 
@@ -160,7 +160,7 @@ def generate_certificate(
             f"{correct_answers}"
             f"/{question_count}"
         ),
-        fill="#091C43",
+        fill="#B8860B",
         font=text_font,
     )
 
