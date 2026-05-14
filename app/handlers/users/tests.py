@@ -57,7 +57,7 @@ router = Router()
 # =========================
 
 @router.callback_query(
-    F.data == "tests_menu"
+    F.data == "user_tests_menu"
 )
 async def tests_menu(
     callback: CallbackQuery,
@@ -135,7 +135,7 @@ async def open_folder(
 
     kb.button(
         text="⬅️ Orqaga",
-        callback_data="tests_menu",
+        callback_data="user_tests_menu",
     )
 
     kb.adjust(1)

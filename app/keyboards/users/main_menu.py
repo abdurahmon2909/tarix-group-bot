@@ -17,7 +17,7 @@ def user_main_menu():
 
                 InlineKeyboardButton(
                     text="📄 Testlar",
-                    callback_data="tests_menu",
+                    callback_data="user_tests_menu",
                 ),
             ],
 
