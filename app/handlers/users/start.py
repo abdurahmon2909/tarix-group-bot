@@ -2,21 +2,31 @@ from __future__ import annotations
 
 import re
 
-from aiogram import Router
-from aiogram import F
+from aiogram import (
+    Router,
+    F,
+)
+
+from aiogram.filters import (
+    CommandStart,
+)
+
+from aiogram.fsm.context import (
+    FSMContext,
+)
 
 from aiogram.types import (
     Message,
     CallbackQuery,
 )
-from app.keyboards.admin import (
-    admin_main_menu,
+
+from aiogram.enums import (
+    ChatMemberStatus,
 )
-from aiogram.filters import CommandStart
 
-from aiogram.fsm.context import FSMContext
-
-from app.config import settings
+from app.config import (
+    settings,
+)
 
 from app.states.register import (
     RegisterStates,
@@ -25,11 +35,22 @@ from app.states.register import (
 from app.services.users.user_service import (
     save_user,
     set_user_fullname,
-    user_has_fullname,
+)
+
+from app.keyboards.users import (
+    user_main_menu,
+    subscription_keyboard,
+)
+
+from app.keyboards.admin import (
+    admin_main_menu,
 )
 
 router = Router()
 
+# =========================
+# FULLNAME VALIDATION
+# =========================
 
 FULLNAME_REGEX = re.compile(
     r"^[A-Za-zʻʼ'` -]+$"
@@ -46,6 +67,36 @@ def fullname_is_valid(
         )
     )
 
+
+# =========================
+# CHECK SUBSCRIPTION
+# =========================
+
+async def is_subscribed(
+    user_id: int,
+    bot,
+) -> bool:
+
+    try:
+
+        member = await bot.get_chat_member(
+            chat_id=settings.CHANNEL_ID,
+            user_id=user_id,
+        )
+
+        return member.status in [
+            ChatMemberStatus.MEMBER,
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.CREATOR,
+        ]
+
+    except Exception:
+        return False
+
+
+# =========================
+# START
+# =========================
 
 @router.message(CommandStart())
 async def start_handler(
@@ -64,29 +115,20 @@ async def start_handler(
         username=message.from_user.username,
     )
 
-    has_fullname = await user_has_fullname(
-        message.from_user.id
+    subscribed = await is_subscribed(
+        user_id=message.from_user.id,
+        bot=message.bot,
     )
 
-    is_admin = (
-            message.from_user.id
-            in settings.ADMINS
-    )
+    if not subscribed:
 
-    if has_fullname:
-
-        if is_admin:
-
-            await message.answer(
-                "⚙️ Admin panel",
-                reply_markup=admin_main_menu(),
-            )
-
-        else:
-
-            await message.answer(
-                "✅ Siz ro‘yxatdan o‘tgansiz"
-            )
+        await message.answer(
+            (
+                "❌ Botdan foydalanish uchun "
+                "kanalga obuna bo‘ling"
+            ),
+            reply_markup=subscription_keyboard(),
+        )
 
         return
 
@@ -95,10 +137,60 @@ async def start_handler(
     )
 
     await message.answer(
-        "✍️ Iltimos ism familiyangizni kiriting:\n\n"
-        "Masalan: Murodjonov Asilbek"
+        (
+            "✍️ Ism familiyangizni kiriting:\n\n"
+            "Masalan:\n"
+            "Murodjonov Asilbek"
+        )
     )
 
+
+# =========================
+# CHECK SUB CALLBACK
+# =========================
+
+@router.callback_query(
+    F.data == "check_subscription"
+)
+async def check_subscription_callback(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    if not callback.from_user:
+        return
+
+    subscribed = await is_subscribed(
+        user_id=callback.from_user.id,
+        bot=callback.bot,
+    )
+
+    if not subscribed:
+
+        await callback.answer(
+            "❌ Hali obuna bo‘lmadingiz",
+            show_alert=True,
+        )
+
+        return
+
+    await callback.message.edit_text(
+        (
+            "✅ Obuna tasdiqlandi\n\n"
+            "✍️ Endi ism familiyangizni kiriting:"
+        )
+    )
+
+    await state.set_state(
+        RegisterStates.waiting_for_fullname
+    )
+
+    await callback.answer()
+
+
+# =========================
+# FULLNAME INPUT
+# =========================
 
 @router.message(
     RegisterStates.waiting_for_fullname
@@ -111,7 +203,9 @@ async def fullname_handler(
     if not message.from_user:
         return
 
-    text = (message.text or "").strip()
+    text = (
+        message.text or ""
+    ).strip()
 
     if text.lower() == "/cancel":
 
@@ -123,12 +217,16 @@ async def fullname_handler(
 
         return
 
-    if not fullname_is_valid(text):
+    if not fullname_is_valid(
+        text
+    ):
 
         await message.answer(
-            "❌ Faqat harflar, bo'sh joy va '-' belgisi ruxsat etiladi.\n\n"
-            "Masalan: Murodjonov Asilbek\n\n"
-            "Qaytadan kiriting:"
+            (
+                "❌ Faqat harflar va "
+                "'-' belgisi ruxsat etiladi\n\n"
+                "Qaytadan kiriting:"
+            )
         )
 
         return
@@ -140,6 +238,56 @@ async def fullname_handler(
 
     await state.clear()
 
-    await message.answer(
-        f"✅ Saqlandi:\n\n{text}"
+    is_admin = (
+        message.from_user.id
+        in settings.ADMINS
     )
+
+    await message.answer(
+        (
+            f"✅ Saqlandi:\n\n"
+            f"{text}"
+        )
+    )
+
+    # ADMIN
+    if is_admin:
+
+        await message.answer(
+            "⚙️ Admin panel",
+            reply_markup=admin_main_menu(),
+        )
+
+        return
+
+    # USER
+    await message.answer(
+        "🏠 Asosiy menyu",
+        reply_markup=user_main_menu(),
+    )
+
+
+# =========================
+# CHANGE NAME
+# =========================
+
+@router.callback_query(
+    F.data == "change_name"
+)
+async def change_name_callback(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    await state.set_state(
+        RegisterStates.waiting_for_fullname
+    )
+
+    await callback.message.answer(
+        (
+            "✍️ Yangi ism familiyangizni "
+            "kiriting:"
+        )
+    )
+
+    await callback.answer()
