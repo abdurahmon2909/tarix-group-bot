@@ -68,11 +68,26 @@ async def start_handler(
         message.from_user.id
     )
 
+    is_admin = (
+            message.from_user.id
+            in settings.ADMINS
+    )
+
     if has_fullname:
-        await message.answer(
-            "⚙️ Admin panel",
-            reply_markup=admin_main_menu(),
-        )
+
+        if is_admin:
+
+            await message.answer(
+                "⚙️ Admin panel",
+                reply_markup=admin_main_menu(),
+            )
+
+        else:
+
+            await message.answer(
+                "✅ Siz ro‘yxatdan o‘tgansiz"
+            )
+
         return
 
     await state.set_state(
