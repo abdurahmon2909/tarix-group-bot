@@ -4,7 +4,7 @@ from aiogram import (
     Router,
     F,
 )
-
+from datetime import datetime
 from aiogram.types import (
     CallbackQuery,
     Message,
@@ -30,6 +30,9 @@ from app.database.repositories.tests import (
     get_child_folders,
     get_tests_by_folder,
     get_test_by_id,
+    get_user_db_id,
+    get_attempts_count,
+    create_test_attempt,
 )
 
 router = Router()
@@ -164,7 +167,8 @@ async def open_test(
     await state.clear()
 
     await state.update_data(
-        solving_test_id=test.id
+        solving_test_id=test.id,
+        started_at=datetime.utcnow().isoformat(),
     )
 
     await state.set_state(
@@ -247,7 +251,68 @@ async def check_answers_handler(
         if result["percent"] >= 70
         else "❌ Sertifikat yo‘q"
     )
+    started_at = datetime.fromisoformat(
+        data["started_at"]
+    )
 
+    duration_seconds = int(
+        (
+                datetime.utcnow()
+                - started_at
+        ).total_seconds()
+    )
+
+    user_db_id = await get_user_db_id(
+        message.from_user.id
+    )
+
+    if not user_db_id:
+        await message.answer(
+            "❌ User topilmadi"
+        )
+
+        return
+
+    attempts_count = (
+        await get_attempts_count(
+            user_id=user_db_id,
+            test_id=test.id,
+        )
+    )
+
+    attempt_number = (
+            attempts_count + 1
+    )
+
+    certificate_generated = (
+            result["percent"] >= 70
+    )
+
+    await create_test_attempt(
+        user_id=user_db_id,
+        test_id=test.id,
+        submitted_answers=(
+            parsed_answers
+        ),
+        correct_answers=(
+            result["correct"]
+        ),
+        wrong_answers=(
+            result["wrong"]
+        ),
+        score_percent=(
+            result["percent"]
+        ),
+        duration_seconds=(
+            duration_seconds
+        ),
+        attempt_number=(
+            attempt_number
+        ),
+        certificate_generated=(
+            certificate_generated
+        ),
+    )
     await message.answer(
         (
             f"📄 {test.title}\n\n"
@@ -260,6 +325,12 @@ async def check_answers_handler(
 
             f"📊 Natija: "
             f"{result['percent']}%\n\n"
+
+            f"🔁 Urinish: "
+            f"{attempt_number}\n"
+
+            f"⏱ Vaqt: "
+            f"{duration_seconds} sec\n\n"
 
             f"{certificate_text}"
         )

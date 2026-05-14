@@ -15,7 +15,15 @@ from app.database.models.test_folder import (
 from app.database.models.test import (
     Test,
 )
+from app.database.models.test_attempt import (
+    TestAttempt,
+)
 
+from app.database.models.user import (
+    User,
+)
+
+from sqlalchemy import func
 
 # =========================
 # CREATE FOLDER
@@ -196,3 +204,101 @@ async def delete_test_by_id(
         await session.commit()
 
         return True
+
+# =========================
+# GET USER DB ID
+# =========================
+
+async def get_user_db_id(
+    telegram_id: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(User).where(
+                User.telegram_id == telegram_id
+            )
+        )
+
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return None
+
+        return user.id
+
+
+# =========================
+# GET ATTEMPTS COUNT
+# =========================
+
+async def get_attempts_count(
+    user_id: int,
+    test_id: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(
+                func.count(
+                    TestAttempt.id
+                )
+            ).where(
+                TestAttempt.user_id
+                == user_id,
+
+                TestAttempt.test_id
+                == test_id,
+            )
+        )
+
+        return result.scalar() or 0
+
+
+# =========================
+# CREATE TEST ATTEMPT
+# =========================
+
+async def create_test_attempt(
+    user_id: int,
+    test_id: int,
+    submitted_answers: dict,
+    correct_answers: int,
+    wrong_answers: int,
+    score_percent: float,
+    duration_seconds: int,
+    attempt_number: int,
+    certificate_generated: bool,
+):
+
+    async with async_session() as session:
+
+        attempt = TestAttempt(
+            user_id=user_id,
+            test_id=test_id,
+            submitted_answers=(
+                submitted_answers
+            ),
+            correct_answers=(
+                correct_answers
+            ),
+            wrong_answers=wrong_answers,
+            score_percent=score_percent,
+            duration_seconds=(
+                duration_seconds
+            ),
+            attempt_number=attempt_number,
+            certificate_generated=(
+                certificate_generated
+            ),
+        )
+
+        session.add(attempt)
+
+        await session.commit()
+
+        await session.refresh(attempt)
+
+        return attempt
