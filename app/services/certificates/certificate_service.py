@@ -133,7 +133,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (315, 680),
+        (315, 660),
         test_name[:28],
         fill="#091C43",
         font=small_font,
