@@ -144,7 +144,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (650, 650),
+        (650, 660),
         f"{score_percent}%",
         fill="#B8860B",
         font=subtitle_font,
@@ -155,7 +155,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (950, 670),
+        (930, 660),
         (
             f"{correct_answers}"
             f"/{question_count}"
@@ -177,7 +177,7 @@ def generate_certificate(
     )
 
     draw.text(
-        (1220, 650),
+        (1220, 660),
         f"{minutes}:{seconds:02}",
         fill="#B8860B",
         font=text_font,
