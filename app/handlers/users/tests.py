@@ -7,7 +7,9 @@ from aiogram import (
 from aiogram.types import (
     FSInputFile,
 )
-
+from app.database.repositories.tests import (
+    create_certificate,
+)
 from app.services.certificates.certificate_service import (
     generate_certificate,
 )
@@ -327,7 +329,7 @@ async def check_answers_handler(
                 ),
             )
         )
-    await create_test_attempt(
+    attempt = await create_test_attempt(
         user_id=user_db_id,
         test_id=test.id,
         submitted_answers=(
@@ -376,13 +378,31 @@ async def check_answers_handler(
     )
 
     if certificate_file:
-        await message.answer_document(
-            document=FSInputFile(
-                path=str(
-                    certificate_file
-                )
-            ),
-            caption=(
-                "🏆 Sertifikatingiz tayyor!"
-            ),
+
+        telegram_message = (
+            await message.answer_document(
+                document=FSInputFile(
+                    path=str(
+                        certificate_file
+                    )
+                ),
+                caption=(
+                    "🏆 Sertifikatingiz tayyor!"
+                ),
+            )
         )
+
+        document = (
+            telegram_message.document
+        )
+
+        if document:
+            await create_certificate(
+                attempt_id=attempt.id,
+                certificate_number=(
+                    certificate_id
+                ),
+                telegram_file_id=(
+                    document.file_id
+                ),
+            )

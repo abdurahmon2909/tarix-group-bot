@@ -7,7 +7,9 @@ from sqlalchemy import (
 from app.database.db import (
     async_session,
 )
-
+from app.database.models.certificate import (
+    Certificate,
+)
 from app.database.models.test_folder import (
     TestFolder,
 )
@@ -301,4 +303,38 @@ async def create_test_attempt(
 
         await session.refresh(attempt)
 
+        await session.refresh(
+            attempt
+        )
+
         return attempt
+
+# =========================
+# CREATE CERTIFICATE
+# =========================
+
+async def create_certificate(
+    attempt_id: int,
+    certificate_number: str,
+    telegram_file_id: str,
+):
+
+    async with async_session() as session:
+
+        certificate = Certificate(
+            attempt_id=attempt_id,
+            certificate_number=(
+                certificate_number
+            ),
+            telegram_file_id=(
+                telegram_file_id
+            ),
+        )
+
+        session.add(certificate)
+
+        await session.commit()
+
+        await session.refresh(certificate)
+
+        return certificate
