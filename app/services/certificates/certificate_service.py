@@ -84,7 +84,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (1320, 120),
+        (1320, 118),
         datetime.now().strftime(
             "%d.%m.%Y"
         ),
