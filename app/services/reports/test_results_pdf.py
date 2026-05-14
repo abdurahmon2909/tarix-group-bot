@@ -22,9 +22,17 @@ from reportlab.lib.pagesizes import (
     A4,
 )
 
-from reportlab.platypus.tables import (
-    Table,
+from reportlab.pdfbase import (
+    pdfmetrics,
 )
+
+from reportlab.pdfbase.ttfonts import (
+    TTFont,
+)
+
+# =====================
+# PATHS
+# =====================
 
 BASE_DIR = Path(
     "assets/reports"
@@ -35,6 +43,39 @@ BASE_DIR.mkdir(
     exist_ok=True,
 )
 
+FONT_PATH = (
+    Path("assets")
+    / "fonts"
+    / "NotoSans-Regular.ttf"
+)
+
+FONT_BOLD_PATH = (
+    Path("assets")
+    / "fonts"
+    / "NotoSans-Bold.ttf"
+)
+
+# =====================
+# REGISTER FONTS
+# =====================
+
+pdfmetrics.registerFont(
+    TTFont(
+        "NotoSans",
+        str(FONT_PATH),
+    )
+)
+
+pdfmetrics.registerFont(
+    TTFont(
+        "NotoSans-Bold",
+        str(FONT_BOLD_PATH),
+    )
+)
+
+# =====================
+# BUILD PDF
+# =====================
 
 def build_test_results_pdf(
     test_title: str,
@@ -56,6 +97,18 @@ def build_test_results_pdf(
     )
 
     styles = getSampleStyleSheet()
+
+    # =====================
+    # GLOBAL FONT
+    # =====================
+
+    styles["Title"].fontName = (
+        "NotoSans-Bold"
+    )
+
+    styles["Normal"].fontName = (
+        "NotoSans"
+    )
 
     story = []
 
@@ -88,10 +141,11 @@ def build_test_results_pdf(
         Paragraph(
             (
                 f"<font size=22>"
-                f"<b>📊 TEST NATIJALARI</b>"
+                f"<b>TEST NATIJALARI</b>"
                 f"</font><br/><br/>"
 
-                f"<font size=16>"
+                f"<font size=14>"
+
                 f"<b>Test:</b> "
                 f"{test_title}<br/>"
 
@@ -103,6 +157,7 @@ def build_test_results_pdf(
 
                 f"<b>Sertifikat olganlar:</b> "
                 f"{certificates}"
+
                 f"</font>"
             ),
             styles["Normal"],
@@ -149,19 +204,25 @@ def build_test_results_pdf(
         )
 
         certificate = (
-            "✅"
+            "Bor"
             if (
                 attempt.certificate_generated
             )
-            else "❌"
+            else "Yo‘q"
         )
 
+        duration = getattr(
+            attempt,
+            "duration_seconds",
+            0,
+        ) or 0
+
         minutes = (
-            attempt.duration_seconds // 60
+            duration // 60
         )
 
         seconds = (
-            attempt.duration_seconds % 60
+            duration % 60
         )
 
         data.append([
@@ -185,20 +246,23 @@ def build_test_results_pdf(
         data,
         repeatRows=1,
         colWidths=[
-            35,
-            180,
-            80,
-            70,
-            80,
-            70,
-            80,
-            80,
+            40,
+            220,
+            90,
+            90,
+            90,
+            90,
+            90,
+            100,
         ],
     )
 
     style = TableStyle([
 
+        # =====================
         # HEADER
+        # =====================
+
         (
             "BACKGROUND",
             (0, 0),
@@ -219,14 +283,14 @@ def build_test_results_pdf(
             "FONTNAME",
             (0, 0),
             (-1, 0),
-            "Helvetica-Bold",
+            "NotoSans-Bold",
         ),
 
         (
             "FONTSIZE",
             (0, 0),
-            (-1, -1),
-            11,
+            (-1, 0),
+            12,
         ),
 
         (
@@ -239,11 +303,46 @@ def build_test_results_pdf(
         (
             "TOPPADDING",
             (0, 0),
+            (-1, 0),
+            12,
+        ),
+
+        # =====================
+        # BODY
+        # =====================
+
+        (
+            "FONTNAME",
+            (0, 1),
+            (-1, -1),
+            "NotoSans",
+        ),
+
+        (
+            "FONTSIZE",
+            (0, 1),
+            (-1, -1),
+            10,
+        ),
+
+        (
+            "TOPPADDING",
+            (0, 1),
             (-1, -1),
             8,
         ),
 
+        (
+            "BOTTOMPADDING",
+            (0, 1),
+            (-1, -1),
+            8,
+        ),
+
+        # =====================
         # GRID
+        # =====================
+
         (
             "GRID",
             (0, 0),
@@ -254,7 +353,10 @@ def build_test_results_pdf(
             ),
         ),
 
-        # ALIGN
+        # =====================
+        # ALIGNMENT
+        # =====================
+
         (
             "ALIGN",
             (0, 0),
@@ -269,7 +371,7 @@ def build_test_results_pdf(
             "MIDDLE",
         ),
 
-        # NAME ALIGN
+        # NAME COLUMN LEFT
         (
             "ALIGN",
             (1, 1),
@@ -279,7 +381,10 @@ def build_test_results_pdf(
 
     ])
 
-    # Zebra rows
+    # =====================
+    # ZEBRA ROWS
+    # =====================
+
     for i in range(
         1,
         len(data),
