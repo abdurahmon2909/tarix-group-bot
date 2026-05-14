@@ -53,20 +53,30 @@ def generate_certificate(
     # FONTS
     # =====================
 
-    title_font = ImageFont.truetype(
-        "arial.ttf",
-        70,
-    )
+    try:
 
-    text_font = ImageFont.truetype(
-        "arial.ttf",
-        32,
-    )
+        title_font = ImageFont.truetype(
+            "DejaVuSans-Bold.ttf",
+            70,
+        )
 
-    small_font = ImageFont.truetype(
-        "arial.ttf",
-        24,
-    )
+        text_font = ImageFont.truetype(
+            "DejaVuSans.ttf",
+            32,
+        )
+
+        small_font = ImageFont.truetype(
+            "DejaVuSans.ttf",
+            24,
+        )
+
+    except Exception:
+
+        title_font = ImageFont.load_default()
+
+        text_font = ImageFont.load_default()
+
+        small_font = ImageFont.load_default()
 
     # =====================
     # FULLNAME
