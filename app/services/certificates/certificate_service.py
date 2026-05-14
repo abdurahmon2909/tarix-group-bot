@@ -66,12 +66,12 @@ def generate_certificate(
 
     subtitle_font = ImageFont.truetype(
         str(FONT_PATH),
-        42,
+        32,
     )
 
     text_font = ImageFont.truetype(
         str(FONT_PATH),
-        38,
+        28,
     )
 
     small_font = ImageFont.truetype(
@@ -133,7 +133,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (315, 690),
+        (315, 650),
         test_name[:28],
         fill="#091C43",
         font=text_font,
@@ -144,7 +144,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (650, 690),
+        (650, 650),
         f"{score_percent}%",
         fill="#B8860B",
         font=subtitle_font,
@@ -155,7 +155,7 @@ def generate_certificate(
     # =====================
 
     draw.text(
-        (980, 690),
+        (980, 650),
         (
             f"{correct_answers}"
             f"/{question_count}"
@@ -177,7 +177,7 @@ def generate_certificate(
     )
 
     draw.text(
-        (1220, 690),
+        (1220, 650),
         f"{minutes}:{seconds:02}",
         fill="#B8860B",
         font=text_font,
