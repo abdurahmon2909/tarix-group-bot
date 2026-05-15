@@ -193,11 +193,25 @@ async def track_group_messages(
     # STRICT MESSAGE FILTER
     # =========================
 
+    text_to_check = ""
+
+    if message.text:
+        text_to_check = message.text
+
+    elif message.caption:
+        text_to_check = message.caption
+
+    elif (
+            message.sticker
+            and message.sticker.emoji
+    ):
+        text_to_check = (
+            message.sticker.emoji
+        )
+
     text_to_check = (
-        message.text
-        or message.caption
-        or ""
-    ).strip()
+        text_to_check.strip()
+    )
 
     if text_to_check:
 
