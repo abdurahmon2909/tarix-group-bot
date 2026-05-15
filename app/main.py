@@ -12,6 +12,9 @@ from app.handlers.users.support import (
 )
 from app.config import settings
 
+from app.handlers.common.navigation import (
+    router as navigation_router,
+)
 from app.middlewares.admin import (
     AdminMiddleware,
 )
@@ -106,6 +109,9 @@ dp.include_router(
 )
 dp.include_router(
     user_tests_router
+)
+dp.include_router(
+    navigation_router
 )
 # SUPPORT
 dp.include_router(
