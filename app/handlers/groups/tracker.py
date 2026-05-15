@@ -206,6 +206,9 @@ async def track_group_messages(
 
                         try:
                             await message.delete()
+
+                            await asyncio.sleep(0.7)
+
                         except:
                             pass
 
