@@ -86,12 +86,7 @@ async def tests_menu(
         text="📊 Natijalar",
         callback_data="tests_results",
     )
-    kb.button(
-        text="✏️ Kalitni tahrirlash",
-        callback_data=(
-            f"edit_answer_key:{test.id}"
-        ),
-    )
+
     kb.button(
         text="🏆 Sertifikatlar",
         callback_data="certificate_templates",
@@ -880,6 +875,13 @@ async def show_test_handler(
         text="📊 Natijalar",
         callback_data=(
             f"results_test:{test.id}"
+        ),
+    )
+
+    kb.button(
+        text="✏️ Kalitni tahrirlash",
+        callback_data=(
+            f"edit_answer_key:{test.id}"
         ),
     )
 
