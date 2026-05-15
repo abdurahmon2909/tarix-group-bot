@@ -7,6 +7,11 @@ from aiogram import (
     Bot,
     Dispatcher,
 )
+from aiogram.types import (
+    BotCommand,
+    BotCommandScopeAllPrivateChats,
+    BotCommandScopeChat,
+)
 from app.handlers.users.support import (
     router as support_router,
 )
@@ -135,7 +140,27 @@ async def main():
     )
     await init_models()
     await refresh_groups_cache()
-
+    await bot.set_my_commands(
+        commands=[
+            BotCommand(
+                command="start",
+                description="Botni boshlash",
+            ),
+        ],
+        scope=BotCommandScopeAllPrivateChats(),
+    )
+    for admin_id in settings.ADMINS:
+        await bot.set_my_commands(
+            commands=[
+                BotCommand(
+                    command="admin",
+                    description="Admin panel",
+                ),
+            ],
+            scope=BotCommandScopeChat(
+                chat_id=admin_id
+            ),
+        )
     await bot.delete_webhook(
         drop_pending_updates=True
     )
