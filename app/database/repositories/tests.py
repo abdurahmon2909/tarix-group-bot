@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from sqlalchemy import delete
 from sqlalchemy import (
     select,
 )
@@ -21,12 +21,12 @@ from app.database.models.certificate import (
 from app.database.models.test_folder import (
     TestFolder,
 )
+from app.database.models.test_folder import (
+    TestFolder,
+)
 
 from app.database.models.test import (
     Test,
-)
-from app.database.models.test_attempt import (
-    TestAttempt,
 )
 
 from app.database.models.user import (
@@ -503,3 +503,81 @@ async def get_certificate_template_by_id(
         )
 
         return result.scalar_one_or_none()
+
+# =========================
+# DELETE FOLDER CASCADE
+# =========================
+
+async def delete_folder_by_id(
+    folder_id: int,
+):
+
+    async with async_session() as session:
+
+        # CHILD FOLDERS
+
+        child_folders = await session.execute(
+            select(TestFolder)
+            .where(
+                TestFolder.parent_id
+                == folder_id
+            )
+        )
+
+        child_folders = (
+            child_folders.scalars().all()
+        )
+
+        # RECURSIVE DELETE
+
+        for child in child_folders:
+
+            await delete_folder_by_id(
+                child.id
+            )
+
+        # GET TEST IDS
+
+        tests = await session.execute(
+            select(Test.id)
+            .where(
+                Test.folder_id
+                == folder_id
+            )
+        )
+
+        test_ids = tests.scalars().all()
+
+        # DELETE ATTEMPTS
+
+        if test_ids:
+            await session.execute(
+                delete(TestAttempt)
+                .where(
+                    TestAttempt.test_id.in_(
+                        test_ids
+                    )
+                )
+            )
+
+        # DELETE TESTS
+
+        await session.execute(
+            delete(Test)
+            .where(
+                Test.folder_id
+                == folder_id
+            )
+        )
+
+        # DELETE FOLDER
+
+        await session.execute(
+            delete(TestFolder)
+            .where(
+                TestFolder.id
+                == folder_id
+            )
+        )
+
+        await session.commit()

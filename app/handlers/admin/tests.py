@@ -39,6 +39,7 @@ from app.database.repositories.tests import (
     get_test_results,
     delete_test_by_id,
     update_test_answer_key,
+    delete_folder_by_id,
 
     count_test_attempts,
 
@@ -86,7 +87,10 @@ async def tests_menu(
         text="📊 Natijalar",
         callback_data="tests_results",
     )
-
+    kb.button(
+        text="🗑 Papkani o‘chirish",
+        callback_data="delete_test_folder_menu",
+    )
     kb.button(
         text="🏆 Sertifikatlar",
         callback_data="certificate_templates",
@@ -585,6 +589,182 @@ async def generate_results_pdf(
     await callback.answer()
 
 # =========================
+# DELETE TEST FOLDER MENU
+# =========================
+
+@router.callback_query(
+    F.data == "delete_test_folder_menu"
+)
+async def delete_test_folder_menu(
+    callback: CallbackQuery,
+):
+
+    folders = await get_root_test_folders()
+
+    if not folders:
+
+        await callback.answer(
+            "Papkalar topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    kb = InlineKeyboardBuilder()
+
+    for folder in folders:
+
+        kb.button(
+            text=f"🗑 📂 {folder.name}",
+            callback_data=(
+                f"delete_test_folder:"
+                f"{folder.id}"
+            ),
+        )
+
+    kb.button(
+        text="⬅️ Orqaga",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            "🗑 O‘chiriladigan "
+            "papkani tanlang"
+        ),
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+# =========================
+# CONFIRM DELETE FOLDER
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "delete_test_folder:"
+    )
+)
+async def confirm_delete_test_folder(
+    callback: CallbackQuery,
+):
+
+    folder_id = int(
+        callback.data.split(":")[1]
+    )
+
+    folder = await get_folder_by_id(
+        folder_id
+    )
+
+    if not folder:
+
+        await callback.answer(
+            "Papka topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="✅ Ha, o‘chirish",
+        callback_data=(
+            f"confirm_delete_test_folder:"
+            f"{folder.id}"
+        ),
+    )
+
+    kb.button(
+        text="❌ Bekor qilish",
+        callback_data=(
+            "delete_test_folder_menu"
+        ),
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            "⚠️ DIQQAT\n\n"
+
+            f"📂 {folder.name}\n\n"
+
+            "Bu papka ichidagi:\n"
+            "• barcha testlar\n"
+            "• child papkalar\n"
+            "• natijalar\n\n"
+
+            "o‘chiriladi.\n\n"
+
+            "Davom etilsinmi?"
+        ),
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+# =========================
+# FINAL DELETE FOLDER
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "confirm_delete_test_folder:"
+    )
+)
+async def final_delete_test_folder(
+    callback: CallbackQuery,
+):
+
+    folder_id = int(
+        callback.data.split(":")[1]
+    )
+
+    folder = await get_folder_by_id(
+        folder_id
+    )
+
+    if not folder:
+
+        await callback.answer(
+            "Papka topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    folder_name = folder.name
+
+    await delete_folder_by_id(
+        folder_id
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📚 Testlar",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            "✅ Papka o‘chirildi\n\n"
+
+            f"📂 {folder_name}"
+        ),
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+# =========================
 # DELETE TEST MENU
 # =========================
 
@@ -674,11 +854,131 @@ async def delete_folder_handler(
 # DELETE TEST
 # =========================
 
+# =========================
+# CONFIRM DELETE TEST
+# =========================
+
 @router.callback_query(
     F.data.startswith(
         "delete_test:"
     )
 )
+async def confirm_delete_test_handler(
+    callback: CallbackQuery,
+):
+
+    test_id = int(
+        callback.data.split(":")[1]
+    )
+
+    test = await get_test_by_id(
+        test_id
+    )
+
+    if not test:
+
+        await callback.answer(
+            "Test topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="✅ Ha, o‘chirish",
+        callback_data=(
+            f"confirm_delete_test:"
+            f"{test.id}"
+        ),
+    )
+
+    kb.button(
+        text="❌ Bekor qilish",
+        callback_data=(
+            f"show_test:{test.id}"
+        ),
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            "⚠️ TESTNI O‘CHIRISH\n\n"
+
+            f"📄 {test.title}\n\n"
+
+            "Bu test:\n"
+            "• natijalari\n"
+            "• urinishlari\n"
+            "• sertifikatlari\n\n"
+
+            "bilan birga o‘chiriladi.\n\n"
+
+            "Davom etilsinmi?"
+        ),
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
+
+
+# =========================
+# FINAL DELETE TEST
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "confirm_delete_test:"
+    )
+)
+async def final_delete_test_handler(
+    callback: CallbackQuery,
+):
+
+    test_id = int(
+        callback.data.split(":")[1]
+    )
+
+    test = await get_test_by_id(
+        test_id
+    )
+
+    if not test:
+
+        await callback.answer(
+            "Test topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    test_title = test.title
+
+    await delete_test_by_id(
+        test_id
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📚 Testlar",
+        callback_data="tests_menu",
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            "✅ Test o‘chirildi\n\n"
+
+            f"📄 {test_title}"
+        ),
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
 async def delete_test_handler(
     callback: CallbackQuery,
 ):
