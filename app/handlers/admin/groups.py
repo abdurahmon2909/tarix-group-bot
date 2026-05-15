@@ -147,7 +147,7 @@ async def add_group_menu(
     if not groups:
 
         await callback.answer(
-            "Yangi guruh topilmadi",
+            "Yangi guruh topilmadi. Botni guruhga admin qiling!",
             show_alert=True,
         )
 
