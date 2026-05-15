@@ -979,49 +979,6 @@ async def final_delete_test_handler(
     )
 
     await callback.answer()
-async def delete_test_handler(
-    callback: CallbackQuery,
-):
-
-    test_id = int(
-        callback.data.split(":")[1]
-    )
-
-    test = await get_test_by_id(
-        test_id
-    )
-
-    if not test:
-
-        await callback.answer(
-            "Test topilmadi",
-            show_alert=True,
-        )
-
-        return
-
-    await delete_test_by_id(
-        test_id
-    )
-
-    kb = InlineKeyboardBuilder()
-
-    kb.button(
-        text="📚 Testlarim",
-        callback_data="tests_menu",
-    )
-
-    kb.adjust(1)
-
-    await callback.message.edit_text(
-        (
-            f"✅ Test o‘chirildi\n\n"
-            f"{test.title}"
-        ),
-        reply_markup=kb.as_markup(),
-    )
-
-    await callback.answer()
 
 # =========================
 # EXISTING TESTS

@@ -209,6 +209,13 @@ async def delete_test_by_id(
         if not test:
             return False
 
+        await session.execute(
+            delete(TestAttempt)
+            .where(
+                TestAttempt.test_id
+                == test_id
+            )
+        )
         await session.delete(test)
 
         await session.commit()
