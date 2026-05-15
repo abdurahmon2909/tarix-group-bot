@@ -6,7 +6,7 @@ import asyncio
 from aiogram import (
     Router,
 )
-
+from aiogram import F
 from aiogram.enums import (
     ChatType,
     ChatMemberStatus,
@@ -15,7 +15,13 @@ from aiogram.enums import (
 from aiogram.types import (
     Message,
 )
+from app.config import settings
 
+from app.services.moderation.fullname_filter import (
+    detect_nsfw_fullname,
+    is_fullname_cached,
+    update_fullname_cache,
+)
 from app.database.repositories.groups import (
     create_group_if_not_exists,
     is_group_active,
@@ -68,6 +74,113 @@ async def track_group_messages(
         "GROUP MESSAGE:",
         message.text,
     )
+
+    # =========================
+    # STRICT FULLNAME FILTER
+    # =========================
+
+    user = message.from_user
+
+    if user.id not in settings.ADMINS:
+        member = await message.bot.get_chat_member(
+            chat_id=message.chat.id,
+            user_id=user.id,
+        )
+
+        if member.status in [
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.CREATOR,
+        ]:
+            return
+
+        fullname = (
+            user.full_name or ""
+        ).strip()
+
+        if fullname:
+
+            # CACHE CHECK
+
+            if not is_fullname_cached(
+                user.id,
+                fullname,
+            ):
+
+                reason = (
+                    detect_nsfw_fullname(
+                        fullname
+                    )
+                )
+
+                # UPDATE CACHE
+
+                update_fullname_cache(
+                    user.id,
+                    fullname,
+                )
+
+                if reason:
+
+                    # DELETE MESSAGE
+
+                    try:
+                        await message.delete()
+                    except:
+                        pass
+
+                    # BAN USER
+
+                    try:
+                        await message.bot.ban_chat_member(
+                            chat_id=message.chat.id,
+                            user_id=user.id,
+                        )
+                    except:
+                        return
+
+                    username = (
+                        f"@{user.username}"
+                        if user.username
+                        else "USERNAME YO'Q"
+                    )
+
+                    log_text = (
+                        "🚨 FOYDALANUVCHI "
+                        "AVTOMATIK BAN QILINDI 🚨\n\n"
+
+                        f"👤 ISM:\n"
+                        f"{fullname}\n\n"
+
+                        f"🔗 USERNAME:\n"
+                        f"{username}\n\n"
+
+                        f"🆔 USER ID:\n"
+                        f"{user.id}\n\n"
+                        f"🏘 GURUH:\n"
+                        f"{message.chat.title}\n\n"
+                        
+                        f"📛 SABAB:\n"
+                        f"{reason}\n\n"
+
+                        "🤖 AMAL:\n"
+                        "XABAR O'CHIRILDI "
+                        "VA FOYDALANUVCHI "
+                        "BANGA YUBORILDI"
+                    )
+
+                    # SEND ADMINS
+
+                    for admin_id in settings.ADMINS:
+
+                        try:
+                            await message.bot.send_message(
+                                chat_id=admin_id,
+                                text=log_text,
+                            )
+                        except:
+                            pass
+
+                    return
 
     # =========================
     # AUTO DELETE JOIN/LEFT
@@ -300,3 +413,4 @@ async def track_group_messages(
             "SAVE ERROR:",
             repr(e),
         )
+
