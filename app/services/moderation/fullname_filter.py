@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import re
 
 
 # =========================
@@ -27,8 +26,8 @@ NSFW_EMOJIS = {
     "🔞",
     "🥵",
     "🍌",
-    "❤️"
-    "😍"
+    "❤️",
+    "😍",
     "😈",
 }
 
@@ -102,7 +101,7 @@ def update_fullname_cache(
 
 
 # =========================
-# DETECT
+# DETECT FULLNAME
 # =========================
 
 def detect_nsfw_fullname(
@@ -133,8 +132,9 @@ def detect_nsfw_fullname(
 
     return None
 
+
 # =========================
-# MESSAGE TEXT FILTER
+# DETECT MESSAGE TEXT
 # =========================
 
 def detect_nsfw_text(

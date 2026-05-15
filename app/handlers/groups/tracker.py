@@ -6,7 +6,6 @@ import asyncio
 from aiogram import (
     Router,
 )
-from aiogram import F
 from aiogram.enums import (
     ChatType,
     ChatMemberStatus,
@@ -15,6 +14,7 @@ from aiogram.enums import (
 from aiogram.types import (
     Message,
 )
+
 from app.config import settings
 
 from app.services.moderation.fullname_filter import (
@@ -23,6 +23,7 @@ from app.services.moderation.fullname_filter import (
     update_fullname_cache,
     detect_nsfw_text,
 )
+
 from app.database.repositories.groups import (
     create_group_if_not_exists,
     is_group_active,
@@ -71,6 +72,8 @@ async def track_group_messages(
     ):
         return
 
+    user = message.from_user
+
     print(
         "GROUP MESSAGE:",
         message.text,
@@ -80,9 +83,8 @@ async def track_group_messages(
     # STRICT FULLNAME FILTER
     # =========================
 
-    user = message.from_user
-
     if user.id not in settings.ADMINS:
+
         member = await message.bot.get_chat_member(
             chat_id=message.chat.id,
             user_id=user.id,
@@ -126,6 +128,9 @@ async def track_group_messages(
 
                     try:
                         await message.delete()
+
+                        await asyncio.sleep(0.7)
+
                     except:
                         pass
 
@@ -157,9 +162,10 @@ async def track_group_messages(
 
                         f"🆔 USER ID:\n"
                         f"{user.id}\n\n"
+
                         f"🏘 GURUH:\n"
                         f"{message.chat.title}\n\n"
-                        
+
                         f"📛 SABAB:\n"
                         f"{reason}\n\n"
 
@@ -182,91 +188,95 @@ async def track_group_messages(
                             pass
 
                     return
-                # =========================
-                # STRICT MESSAGE FILTER
-                # =========================
 
-                text_to_check = (
-                        message.text
-                        or message.caption
-                        or ""
-                ).strip()
+    # =========================
+    # STRICT MESSAGE FILTER
+    # =========================
 
-                if text_to_check:
+    text_to_check = (
+        message.text
+        or message.caption
+        or ""
+    ).strip()
 
-                    reason = (
-                        detect_nsfw_text(
-                            text_to_check
-                        )
+    if text_to_check:
+
+        reason = (
+            detect_nsfw_text(
+                text_to_check
+            )
+        )
+
+        if reason:
+
+            # DELETE MESSAGE
+
+            try:
+                await message.delete()
+
+                await asyncio.sleep(0.7)
+
+            except:
+                pass
+
+            # BAN USER
+
+            try:
+                await message.bot.ban_chat_member(
+                    chat_id=message.chat.id,
+                    user_id=user.id,
+                )
+            except:
+                return
+
+            username = (
+                f"@{user.username}"
+                if user.username
+                else "USERNAME YO'Q"
+            )
+
+            fullname = (
+                user.full_name or ""
+            )
+
+            log_text = (
+                "🚨 NSFW XABAR ANIQLANDI 🚨\n\n"
+
+                f"👤 ISM:\n"
+                f"{fullname}\n\n"
+
+                f"🔗 USERNAME:\n"
+                f"{username}\n\n"
+
+                f"🆔 USER ID:\n"
+                f"{user.id}\n\n"
+
+                f"🏘 GURUH:\n"
+                f"{message.chat.title}\n\n"
+
+                f"📛 SABAB:\n"
+                f"{reason}\n\n"
+
+                f"💬 XABAR:\n"
+                f"{text_to_check[:300]}\n\n"
+
+                "🤖 AMAL:\n"
+                "XABAR O'CHIRILDI "
+                "VA FOYDALANUVCHI "
+                "BANGA YUBORILDI"
+            )
+
+            for admin_id in settings.ADMINS:
+
+                try:
+                    await message.bot.send_message(
+                        chat_id=admin_id,
+                        text=log_text,
                     )
+                except:
+                    pass
 
-                    if reason:
-
-                        # DELETE MESSAGE
-
-                        try:
-                            await message.delete()
-
-                            await asyncio.sleep(0.7)
-
-                        except:
-                            pass
-
-                        # BAN USER
-
-                        try:
-                            await message.bot.ban_chat_member(
-                                chat_id=message.chat.id,
-                                user_id=user.id,
-                            )
-                        except:
-                            return
-
-                        username = (
-                            f"@{user.username}"
-                            if user.username
-                            else "USERNAME YO'Q"
-                        )
-
-                        log_text = (
-                            "🚨 NSFW XABAR ANIQLANDI 🚨\n\n"
-
-                            f"👤 ISM:\n"
-                            f"{fullname}\n\n"
-
-                            f"🔗 USERNAME:\n"
-                            f"{username}\n\n"
-
-                            f"🆔 USER ID:\n"
-                            f"{user.id}\n\n"
-
-                            f"🏘 GURUH:\n"
-                            f"{message.chat.title}\n\n"
-
-                            f"📛 SABAB:\n"
-                            f"{reason}\n\n"
-
-                            f"💬 XABAR:\n"
-                            f"{text_to_check[:300]}\n\n"
-
-                            "🤖 AMAL:\n"
-                            "XABAR O'CHIRILDI "
-                            "VA FOYDALANUVCHI "
-                            "BANGA YUBORILDI"
-                        )
-
-                        for admin_id in settings.ADMINS:
-
-                            try:
-                                await message.bot.send_message(
-                                    chat_id=admin_id,
-                                    text=log_text,
-                                )
-                            except:
-                                pass
-
-                        return
-
+            return
 
     # =========================
     # AUTO DELETE JOIN/LEFT
@@ -499,4 +509,3 @@ async def track_group_messages(
             "SAVE ERROR:",
             repr(e),
         )
-
