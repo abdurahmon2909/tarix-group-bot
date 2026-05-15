@@ -126,13 +126,23 @@ async def track_group_messages(
 
                     # DELETE MESSAGE
 
-                    try:
-                        await message.delete()
+                    deleted = False
 
-                        await asyncio.sleep(0.7)
+                    for _ in range(3):
 
-                    except:
-                        pass
+                        try:
+
+                            await message.delete()
+
+                            deleted = True
+
+                            break
+
+                        except:
+
+                            await asyncio.sleep(0.5)
+
+                    await asyncio.sleep(1)
 
                     # BAN USER
 
@@ -225,13 +235,23 @@ async def track_group_messages(
 
             # DELETE MESSAGE
 
-            try:
-                await message.delete()
+            deleted = False
 
-                await asyncio.sleep(0.7)
+            for _ in range(3):
 
-            except:
-                pass
+                try:
+
+                    await message.delete()
+
+                    deleted = True
+
+                    break
+
+                except:
+
+                    await asyncio.sleep(0.5)
+
+            await asyncio.sleep(1)
 
             # BAN USER
 
