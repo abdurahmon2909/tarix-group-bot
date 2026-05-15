@@ -21,6 +21,7 @@ from app.services.moderation.fullname_filter import (
     detect_nsfw_fullname,
     is_fullname_cached,
     update_fullname_cache,
+    detect_nsfw_text,
 )
 from app.database.repositories.groups import (
     create_group_if_not_exists,
@@ -181,6 +182,88 @@ async def track_group_messages(
                             pass
 
                     return
+                # =========================
+                # STRICT MESSAGE FILTER
+                # =========================
+
+                text_to_check = (
+                        message.text
+                        or message.caption
+                        or ""
+                ).strip()
+
+                if text_to_check:
+
+                    reason = (
+                        detect_nsfw_text(
+                            text_to_check
+                        )
+                    )
+
+                    if reason:
+
+                        # DELETE MESSAGE
+
+                        try:
+                            await message.delete()
+                        except:
+                            pass
+
+                        # BAN USER
+
+                        try:
+                            await message.bot.ban_chat_member(
+                                chat_id=message.chat.id,
+                                user_id=user.id,
+                            )
+                        except:
+                            return
+
+                        username = (
+                            f"@{user.username}"
+                            if user.username
+                            else "USERNAME YO'Q"
+                        )
+
+                        log_text = (
+                            "🚨 NSFW XABAR ANIQLANDI 🚨\n\n"
+
+                            f"👤 ISM:\n"
+                            f"{fullname}\n\n"
+
+                            f"🔗 USERNAME:\n"
+                            f"{username}\n\n"
+
+                            f"🆔 USER ID:\n"
+                            f"{user.id}\n\n"
+
+                            f"🏘 GURUH:\n"
+                            f"{message.chat.title}\n\n"
+
+                            f"📛 SABAB:\n"
+                            f"{reason}\n\n"
+
+                            f"💬 XABAR:\n"
+                            f"{text_to_check[:300]}\n\n"
+
+                            "🤖 AMAL:\n"
+                            "XABAR O'CHIRILDI "
+                            "VA FOYDALANUVCHI "
+                            "BANGA YUBORILDI"
+                        )
+
+                        for admin_id in settings.ADMINS:
+
+                            try:
+                                await message.bot.send_message(
+                                    chat_id=admin_id,
+                                    text=log_text,
+                                )
+                            except:
+                                pass
+
+                        return
+
 
     # =========================
     # AUTO DELETE JOIN/LEFT

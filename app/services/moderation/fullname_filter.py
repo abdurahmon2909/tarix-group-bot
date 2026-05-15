@@ -129,3 +129,35 @@ def detect_nsfw_fullname(
             )
 
     return None
+
+# =========================
+# MESSAGE TEXT FILTER
+# =========================
+
+def detect_nsfw_text(
+    text: str,
+) -> str | None:
+
+    lowered = (
+        text.lower()
+    )
+
+    for emoji in NSFW_EMOJIS:
+
+        if emoji in text:
+
+            return (
+                f"TAQIQLANGAN EMOJI: "
+                f"{emoji}"
+            )
+
+    for keyword in NSFW_KEYWORDS:
+
+        if keyword in lowered:
+
+            return (
+                f"TAQIQLANGAN SO'Z: "
+                f"{keyword.upper()}"
+            )
+
+    return None
