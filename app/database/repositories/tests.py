@@ -215,6 +215,43 @@ async def delete_test_by_id(
 
         return True
 
+
+# =========================
+# UPDATE TEST ANSWER KEY
+# =========================
+
+async def update_test_answer_key(
+    test_id: int,
+    answer_key_json: dict,
+    question_count: int,
+):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Test).where(
+                Test.id == test_id
+            )
+        )
+
+        test = result.scalar_one_or_none()
+
+        if not test:
+            return None
+
+        test.answer_key_json = (
+            answer_key_json
+        )
+
+        test.question_count = (
+            question_count
+        )
+
+        await session.commit()
+
+        await session.refresh(test)
+
+        return test
 # =========================
 # GET USER DB ID
 # =========================

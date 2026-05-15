@@ -38,6 +38,7 @@ from app.database.repositories.tests import (
     create_test,
     get_test_results,
     delete_test_by_id,
+    update_test_answer_key,
 
     count_test_attempts,
 
@@ -85,7 +86,12 @@ async def tests_menu(
         text="📊 Natijalar",
         callback_data="tests_results",
     )
-
+    kb.button(
+        text="✏️ Kalitni tahrirlash",
+        callback_data=(
+            f"edit_answer_key:{test.id}"
+        ),
+    )
     kb.button(
         text="🏆 Sertifikatlar",
         callback_data="certificate_templates",
@@ -911,6 +917,90 @@ async def show_test_handler(
 
     await callback.answer()
 
+
+# =========================
+# EDIT ANSWER KEY
+# =========================
+
+@router.callback_query(
+    F.data.startswith(
+        "edit_answer_key:"
+    )
+)
+async def edit_answer_key_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    test_id = int(
+        callback.data.split(":")[1]
+    )
+
+    test = await get_test_by_id(
+        test_id
+    )
+
+    if not test:
+
+        await callback.answer(
+            "Test topilmadi",
+            show_alert=True,
+        )
+
+        return
+
+    current_answers = []
+
+    for number, answer in sorted(
+        test.answer_key_json.items(),
+        key=lambda x: int(x[0])
+    ):
+
+        current_answers.append(
+            f"{number}.{answer.upper()}"
+        )
+
+    formatted_answers = " ".join(
+        current_answers
+    )
+
+    await state.update_data(
+        edit_test_id=test.id
+    )
+
+    await state.set_state(
+        CreateTestStates.waiting_for_edit_answer_key
+    )
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="❌ Bekor qilish",
+        callback_data=(
+            f"show_test:{test.id}"
+        ),
+    )
+
+    kb.adjust(1)
+
+    await callback.message.edit_text(
+        (
+            f"✏️ {test.title}\n\n"
+
+            f"📌 Hozirgi kalit:\n\n"
+
+            f"<code>{formatted_answers}</code>\n\n"
+
+            f"📝 Yangi javoblar kalitini yuboring\n\n"
+
+            f"Misol:\n"
+            f"<code>1A2D3C4E5B</code>"
+        ),
+        parse_mode="HTML",
+        reply_markup=kb.as_markup(),
+    )
+
+    await callback.answer()
 # =========================
 # CERTIFICATE MENU
 # =========================
@@ -1017,6 +1107,72 @@ async def save_template_name(
     )
 
 
+# =========================
+# SAVE EDITED ANSWER KEY
+# =========================
+
+@router.message(
+    CreateTestStates.waiting_for_edit_answer_key
+)
+async def save_edited_answer_key_handler(
+    message: Message,
+    state: FSMContext,
+):
+
+    text = (
+        message.text or ""
+    ).strip()
+
+    parsed = parse_answer_key(
+        text
+    )
+
+    if not parsed:
+
+        await message.answer(
+            (
+                "❌ Javoblar formati noto‘g‘ri\n\n"
+                "Misol:\n"
+                "1A2D3C4E5B"
+            )
+        )
+
+        return
+
+    data = await state.get_data()
+
+    test_id = data.get(
+        "edit_test_id"
+    )
+
+    test = await update_test_answer_key(
+        test_id=test_id,
+        answer_key_json=parsed,
+        question_count=len(parsed),
+    )
+
+    await state.clear()
+
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📄 Testga qaytish",
+        callback_data=(
+            f"show_test:{test.id}"
+        ),
+    )
+
+    kb.adjust(1)
+
+    await message.answer(
+        (
+            "✅ Test javoblar kaliti yangilandi\n\n"
+
+            f"📊 Savollar soni: "
+            f"{len(parsed)}"
+        ),
+        reply_markup=kb.as_markup(),
+    )
 # =========================
 # SAVE BACKGROUND
 # =========================

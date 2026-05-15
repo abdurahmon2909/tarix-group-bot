@@ -16,6 +16,8 @@ class CreateTestStates(
 
     waiting_for_answer_key = State()
 
+    waiting_for_edit_answer_key = State()
+
     waiting_for_certificate_template = State()
 
 
