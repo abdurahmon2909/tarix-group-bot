@@ -100,10 +100,13 @@ async def reports_menu_handler(
                     ),
                 )
             ],
-            InlineKeyboardButton(
-                text="⬅️ Orqaga",
-                callback_data="admin_panel",
-            ),
+
+            [
+                InlineKeyboardButton(
+                    text="⬅️ Orqaga",
+                    callback_data="admin_panel",
+                ),
+            ],
         ]
     )
 
