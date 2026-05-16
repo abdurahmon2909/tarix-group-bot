@@ -79,21 +79,23 @@ async def tests_menu(
     )
 
     kb.button(
+        text="📊 Natijalar",
+        callback_data="tests_results",
+    )
+
+    kb.button(
+        text="🏆 Sertifikatlar",
+        callback_data="certificate_templates",
+    )
+
+    kb.button(
         text="🗑 Testni o‘chirish",
         callback_data="delete_test_menu",
     )
 
     kb.button(
-        text="📊 Natijalar",
-        callback_data="tests_results",
-    )
-    kb.button(
         text="🗑 Papkani o‘chirish",
         callback_data="delete_test_folder_menu",
-    )
-    kb.button(
-        text="🏆 Sertifikatlar",
-        callback_data="certificate_templates",
     )
 
     kb.button(
