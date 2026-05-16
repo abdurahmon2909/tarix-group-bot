@@ -29,13 +29,15 @@ async def check_user_subscription(
         settings.REQUIRED_CHANNELS
     )
 
-    for channel_id in channels:
+    for channel in channels:
 
         try:
 
             member = (
                 await bot.get_chat_member(
-                    chat_id=channel_id,
+                    chat_id=(
+                        channel["chat_id"]
+                    ),
                     user_id=user_id,
                 )
             )
@@ -54,6 +56,46 @@ async def check_user_subscription(
 
 
 # =========================
+# BUILD SUBSCRIBE KEYBOARD
+# =========================
+
+def build_subscription_keyboard():
+
+    channels = (
+        settings.REQUIRED_CHANNELS
+    )
+
+    keyboard = []
+
+    for channel in channels:
+
+        keyboard.append([
+            InlineKeyboardButton(
+                text=(
+                    f"📢 "
+                    f"{channel['title']}"
+                ),
+                url=(
+                    channel["invite_link"]
+                ),
+            )
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="✅ Tekshirish",
+            callback_data=(
+                "recheck_subscription"
+            ),
+        )
+    ])
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=keyboard
+    )
+
+
+# =========================
 # LOOP
 # =========================
 
@@ -64,10 +106,6 @@ async def subscription_checker_loop(
     while True:
 
         users = await get_all_users()
-
-        channels = (
-            settings.REQUIRED_CHANNELS
-        )
 
         for user in users:
 
@@ -85,43 +123,6 @@ async def subscription_checker_loop(
                 if subscribed:
                     continue
 
-                keyboard = []
-
-                for channel_id in channels:
-
-                    try:
-
-                        invite_link = (
-                            await bot.export_chat_invite_link(
-                                channel_id
-                            )
-                        )
-
-                    except:
-
-                        invite_link = None
-
-                    if invite_link:
-
-                        keyboard.append([
-                            InlineKeyboardButton(
-                                text=(
-                                    "📢 Kanalga "
-                                    "obuna bo‘lish"
-                                ),
-                                url=invite_link,
-                            )
-                        ])
-
-                keyboard.append([
-                    InlineKeyboardButton(
-                        text="✅ Tekshirish",
-                        callback_data=(
-                            "recheck_subscription"
-                        ),
-                    )
-                ])
-
                 await bot.send_message(
                     chat_id=user.telegram_id,
                     text=(
@@ -130,9 +131,7 @@ async def subscription_checker_loop(
                         "obuna bo‘ling"
                     ),
                     reply_markup=(
-                        InlineKeyboardMarkup(
-                            inline_keyboard=keyboard
-                        )
+                        build_subscription_keyboard()
                     ),
                 )
 

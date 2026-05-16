@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import os
 
-
+REQUIRED_CHANNELS = [
+    {
+        "chat_id": -1001234567890,
+        "title": "Asosiy kanal",
+        "invite_link": "https://t.me/your_channel",
+    },
+]
 class Settings:
 
     # =========================
@@ -32,9 +38,7 @@ class Settings:
         "CHANNEL_LINK",
         ""
     ).strip()
-    REQUIRED_CHANNELS = [
-        -1001234567890,
-    ]
+
     # =========================
     # ADMINS
     # =========================

@@ -9,6 +9,7 @@ from aiogram.types import (
 
 from app.services.subscription_checker import (
     check_user_subscription,
+    build_subscription_keyboard,
 )
 
 router = Router()
@@ -32,13 +33,17 @@ async def recheck_subscription(
 
     if not subscribed:
 
-        await callback.answer(
+        await callback.message.edit_text(
             (
-                "❌ Hali obuna "
-                "bo‘lmagansiz"
+                "⚠️ Hali kanalga "
+                "obuna bo‘lmagansiz"
             ),
-            show_alert=True,
+            reply_markup=(
+                build_subscription_keyboard()
+            ),
         )
+
+        await callback.answer()
 
         return
 
