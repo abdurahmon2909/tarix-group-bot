@@ -32,7 +32,9 @@ class Settings:
         "CHANNEL_LINK",
         ""
     ).strip()
-
+    REQUIRED_CHANNELS = [
+        -1001234567890,
+    ]
     # =========================
     # ADMINS
     # =========================

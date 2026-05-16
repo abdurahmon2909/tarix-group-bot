@@ -13,9 +13,7 @@ from app.database.repositories.users import (
     get_all_users,
 )
 
-from app.database.repositories.groups import (
-    get_active_groups,
-)
+from app.config import settings
 
 
 # =========================
@@ -27,17 +25,17 @@ async def check_user_subscription(
     user_id: int,
 ) -> bool:
 
-    groups = await get_active_groups()
+    channels = (
+        settings.REQUIRED_CHANNELS
+    )
 
-    for group in groups:
+    for channel_id in channels:
 
         try:
 
             member = (
                 await bot.get_chat_member(
-                    chat_id=(
-                        group.telegram_chat_id
-                    ),
+                    chat_id=channel_id,
                     user_id=user_id,
                 )
             )
@@ -67,7 +65,9 @@ async def subscription_checker_loop(
 
         users = await get_all_users()
 
-        groups = await get_active_groups()
+        channels = (
+            settings.REQUIRED_CHANNELS
+        )
 
         for user in users:
 
@@ -87,13 +87,13 @@ async def subscription_checker_loop(
 
                 keyboard = []
 
-                for group in groups:
+                for channel_id in channels:
 
                     try:
 
                         invite_link = (
                             await bot.export_chat_invite_link(
-                                group.telegram_chat_id
+                                channel_id
                             )
                         )
 
@@ -106,8 +106,8 @@ async def subscription_checker_loop(
                         keyboard.append([
                             InlineKeyboardButton(
                                 text=(
-                                    f"📢 "
-                                    f"{group.title}"
+                                    "📢 Kanalga "
+                                    "obuna bo‘lish"
                                 ),
                                 url=invite_link,
                             )
@@ -126,8 +126,8 @@ async def subscription_checker_loop(
                     chat_id=user.telegram_id,
                     text=(
                         "⚠️ Botdan foydalanish "
-                        "uchun qayta obuna "
-                        "bo‘ling"
+                        "uchun kanalga qayta "
+                        "obuna bo‘ling"
                     ),
                     reply_markup=(
                         InlineKeyboardMarkup(
