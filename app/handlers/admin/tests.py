@@ -577,6 +577,20 @@ async def generate_results_pdf(
         )
     )
 
+    kb = InlineKeyboardBuilder()
+
+    kb.button(
+        text="📊 Natijalar",
+        callback_data="tests_results",
+    )
+
+    kb.button(
+        text="🏠 Admin panel",
+        callback_data="admin_panel",
+    )
+
+    kb.adjust(1)
+
     await callback.message.answer_document(
         document=FSInputFile(
             str(pdf_path)
@@ -584,9 +598,8 @@ async def generate_results_pdf(
         caption=(
             f"📊 {test.title}"
         ),
+        reply_markup=kb.as_markup(),
     )
-
-    await callback.answer()
 
 # =========================
 # DELETE TEST FOLDER MENU

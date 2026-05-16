@@ -12,6 +12,13 @@ from aiogram.types import (
     BotCommandScopeAllPrivateChats,
     BotCommandScopeChat,
 )
+from app.services.subscription_checker import (
+    subscription_checker_loop,
+)
+
+from app.handlers.users.subscription import (
+    router as subscription_router,
+)
 from app.handlers.users.support import (
     router as support_router,
 )
@@ -118,6 +125,9 @@ dp.include_router(
 dp.include_router(
     navigation_router
 )
+dp.include_router(
+    subscription_router
+)
 # SUPPORT
 dp.include_router(
     support_router
@@ -163,6 +173,14 @@ async def main():
         )
     await bot.delete_webhook(
         drop_pending_updates=True
+    )
+
+    import asyncio
+
+    asyncio.create_task(
+        subscription_checker_loop(
+            bot
+        )
     )
 
     await dp.start_polling(
