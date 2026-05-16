@@ -28,16 +28,16 @@ from app.states.broadcast import (
     BroadcastStates,
 )
 
+from app.database.repositories.users import (
+    get_all_users,
+)
+
 from app.database.repositories.groups import (
     get_active_groups,
 )
 
 router = Router()
 
-
-# =========================
-# MENU
-# =========================
 
 @router.callback_query(
     F.data == "broadcast_menu"
@@ -54,6 +54,47 @@ async def broadcast_menu(
         callback.from_user.id
     ):
         return
+
+    await state.clear()
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="🤖 Bot userlarga yuborish",
+                    callback_data="broadcast_users",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🏘 Guruhlarga yuborish",
+                    callback_data="broadcast_groups",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="⬅️ Orqaga",
+                    callback_data="admin_back",
+                )
+            ]
+        ]
+    )
+
+    await callback.message.edit_text(
+        "📢 Broadcast markazi",
+        reply_markup=keyboard,
+    )
+
+    await callback.answer()
+
+
+@router.callback_query(
+    F.data == "broadcast_groups"
+)
+async def broadcast_groups(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
 
     groups = await get_active_groups()
 
@@ -90,17 +131,15 @@ async def broadcast_menu(
 
     keyboard.append([
         InlineKeyboardButton(
-            text="Tanlanganlarga yuborish",
-            callback_data=(
-                "broadcast_continue"
-            ),
+            text="✅ Tanlanganlarga yuborish",
+            callback_data="broadcast_continue",
         )
     ])
 
     keyboard.append([
         InlineKeyboardButton(
             text="⬅️ Orqaga",
-            callback_data="admin_back",
+            callback_data="broadcast_menu",
         )
     ])
 
@@ -113,10 +152,6 @@ async def broadcast_menu(
 
     await callback.answer()
 
-
-# =========================
-# TOGGLE GROUP
-# =========================
 
 @router.callback_query(
     F.data.startswith(
@@ -141,15 +176,11 @@ async def toggle_group(
 
     if group_id in selected_groups:
 
-        selected_groups.remove(
-            group_id
-        )
+        selected_groups.remove(group_id)
 
     else:
 
-        selected_groups.append(
-            group_id
-        )
+        selected_groups.append(group_id)
 
     await state.update_data(
         selected_groups=selected_groups
@@ -172,10 +203,7 @@ async def toggle_group(
 
         keyboard.append([
             InlineKeyboardButton(
-                text=(
-                    f"{checked} "
-                    f"{group.title}"
-                ),
+                text=f"{checked} {group.title}",
                 callback_data=(
                     f"toggle_broadcast_group:"
                     f"{group.telegram_chat_id}"
@@ -186,16 +214,14 @@ async def toggle_group(
     keyboard.append([
         InlineKeyboardButton(
             text="✅ Tanlanganlarga yuborish",
-            callback_data=(
-                "broadcast_continue"
-            ),
+            callback_data="broadcast_continue",
         )
     ])
 
     keyboard.append([
         InlineKeyboardButton(
             text="⬅️ Orqaga",
-            callback_data="admin_back",
+            callback_data="broadcast_menu",
         )
     ])
 
@@ -207,10 +233,6 @@ async def toggle_group(
 
     await callback.answer()
 
-
-# =========================
-# CONTINUE
-# =========================
 
 @router.callback_query(
     F.data == "broadcast_continue"
@@ -247,10 +269,6 @@ async def broadcast_continue(
     await callback.answer()
 
 
-# =========================
-# RECEIVE POST
-# =========================
-
 @router.message(
     BroadcastStates.waiting_for_post
 )
@@ -260,12 +278,8 @@ async def receive_post(
 ):
 
     await state.update_data(
-        post_message_id=(
-            message.message_id
-        ),
-        post_chat_id=(
-            message.chat.id
-        ),
+        post_message_id=message.message_id,
+        post_chat_id=message.chat.id,
     )
 
     keyboard = InlineKeyboardMarkup(
@@ -273,15 +287,11 @@ async def receive_post(
             [
                 InlineKeyboardButton(
                     text="✅ Tasdiqlash",
-                    callback_data=(
-                        "confirm_broadcast"
-                    ),
+                    callback_data="confirm_broadcast",
                 ),
                 InlineKeyboardButton(
                     text="❌ Bekor qilish",
-                    callback_data=(
-                        "cancel_broadcast"
-                    ),
+                    callback_data="cancel_broadcast",
                 ),
             ]
         ]
@@ -292,10 +302,6 @@ async def receive_post(
         reply_markup=keyboard,
     )
 
-
-# =========================
-# CANCEL
-# =========================
 
 @router.callback_query(
     F.data == "cancel_broadcast"
@@ -311,16 +317,10 @@ async def cancel_broadcast(
         "❌ Broadcast bekor qilindi"
     )
 
-    await return_to_admin(
-        callback
-    )
+    await return_to_admin(callback)
 
     await callback.answer()
 
-
-# =========================
-# CONFIRM
-# =========================
 
 @router.callback_query(
     F.data == "confirm_broadcast"
@@ -363,8 +363,7 @@ async def confirm_broadcast(
 
     progress_message = (
         await callback.message.edit_text(
-            f"📢 Broadcast boshlandi...\n\n"
-            f"0/{total}"
+            f"📢 Broadcast boshlandi...\n\n0/{total}"
         )
     )
 
@@ -376,15 +375,9 @@ async def confirm_broadcast(
         try:
 
             await callback.bot.copy_message(
-                chat_id=(
-                    group.telegram_chat_id
-                ),
-                from_chat_id=(
-                    post_chat_id
-                ),
-                message_id=(
-                    post_message_id
-                ),
+                chat_id=group.telegram_chat_id,
+                from_chat_id=post_chat_id,
+                message_id=post_message_id,
             )
 
             success += 1
@@ -422,8 +415,114 @@ async def confirm_broadcast(
 
     await state.clear()
 
-    await return_to_admin(
-        callback
+    await return_to_admin(callback)
+
+    await callback.answer()
+
+
+@router.callback_query(
+    F.data == "broadcast_users"
+)
+async def broadcast_users(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+
+    await state.set_state(
+        BroadcastStates.waiting_for_user_broadcast
+    )
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="❌ Bekor qilish",
+                    callback_data="broadcast_menu",
+                )
+            ]
+        ]
+    )
+
+    await callback.message.edit_text(
+        (
+            "🤖 Userlarga yuboriladigan "
+            "postni yuboring\n\n"
+            "Text, photo, video, "
+            "document ham mumkin"
+        ),
+        reply_markup=keyboard,
     )
 
     await callback.answer()
+
+
+@router.message(
+    BroadcastStates.waiting_for_user_broadcast
+)
+async def send_user_broadcast(
+    message: Message,
+    state: FSMContext,
+):
+
+    users = await get_all_users()
+
+    total = len(users)
+
+    success = 0
+
+    failed = 0
+
+    progress = await message.answer(
+        (
+            "📢 Broadcast boshlandi...\n\n"
+            f"0/{total}"
+        )
+    )
+
+    for idx, user in enumerate(
+        users,
+        start=1,
+    ):
+
+        try:
+
+            await message.copy_to(
+                chat_id=user.telegram_id
+            )
+
+            success += 1
+
+        except Exception:
+
+            failed += 1
+
+        await asyncio.sleep(0.05)
+
+        if idx % 5 == 0:
+
+            try:
+
+                await progress.edit_text(
+                    (
+                        "📢 Broadcast ketmoqda...\n\n"
+                        f"{idx}/{total}\n\n"
+                        f"✅ {success}\n"
+                        f"❌ {failed}"
+                    )
+                )
+
+            except:
+                pass
+
+    await state.clear()
+
+    await progress.edit_text(
+        (
+            "✅ Broadcast tugadi\n\n"
+            f"👥 Userlar: {total}\n"
+            f"✅ Yuborildi: {success}\n"
+            f"❌ Xato: {failed}"
+        )
+    )
+
+    await return_to_admin(message)
