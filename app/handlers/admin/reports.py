@@ -100,6 +100,10 @@ async def reports_menu_handler(
                     ),
                 )
             ],
+            InlineKeyboardButton(
+                text="⬅️ Orqaga",
+                callback_data="admin_panel",
+            ),
         ]
     )
 
@@ -878,6 +882,23 @@ async def end_minute_selected(
         filename,
     )
 
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="📊 Hisobotlar",
+                    callback_data="reports_menu",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🏠 Admin panel",
+                    callback_data="admin_panel",
+                )
+            ],
+        ]
+    )
+
     await callback.message.answer_document(
         FSInputFile(
             filename,
@@ -888,12 +909,13 @@ async def end_minute_selected(
         ),
         caption=(
             f"📊 {group_name}\n"
-            f"📅 {period_label}"
+            f"⏰ {period_label}"
         ),
+        reply_markup=keyboard,
     )
 
-    await state.clear()
     await asyncio.sleep(0.3)
+
     await callback.message.answer(
         "⚙️ Admin panel",
         reply_markup=admin_main_menu(),
