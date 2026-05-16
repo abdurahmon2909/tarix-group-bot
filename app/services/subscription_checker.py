@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from aiogram import Bot
 
 from aiogram.types import (
@@ -7,33 +9,35 @@ from aiogram.types import (
     InlineKeyboardButton,
 )
 
-from app.config import settings
-
 from app.database.repositories.users import (
     get_all_users,
 )
 
-from app.database.repositories.channels import (
-    get_required_channels,
+from app.database.repositories.groups import (
+    get_active_groups,
 )
 
+
+# =========================
+# CHECK USER SUBSCRIPTION
+# =========================
 
 async def check_user_subscription(
     bot: Bot,
     user_id: int,
 ) -> bool:
 
-    channels = (
-        await get_required_channels()
-    )
+    groups = await get_active_groups()
 
-    for channel in channels:
+    for group in groups:
 
         try:
 
             member = (
                 await bot.get_chat_member(
-                    chat_id=channel.telegram_chat_id,
+                    chat_id=(
+                        group.telegram_chat_id
+                    ),
                     user_id=user_id,
                 )
             )
@@ -51,6 +55,10 @@ async def check_user_subscription(
     return True
 
 
+# =========================
+# LOOP
+# =========================
+
 async def subscription_checker_loop(
     bot: Bot,
 ):
@@ -59,6 +67,8 @@ async def subscription_checker_loop(
 
         users = await get_all_users()
 
+        groups = await get_active_groups()
+
         for user in users:
 
             try:
@@ -66,30 +76,42 @@ async def subscription_checker_loop(
                 subscribed = (
                     await check_user_subscription(
                         bot=bot,
-                        user_id=user.telegram_id,
+                        user_id=(
+                            user.telegram_id
+                        ),
                     )
                 )
 
                 if subscribed:
                     continue
 
-                channels = (
-                    await get_required_channels()
-                )
-
                 keyboard = []
 
-                for channel in channels:
+                for group in groups:
 
-                    keyboard.append([
-                        InlineKeyboardButton(
-                            text=(
-                                f"📢 "
-                                f"{channel.title}"
-                            ),
-                            url=channel.invite_link,
+                    try:
+
+                        invite_link = (
+                            await bot.export_chat_invite_link(
+                                group.telegram_chat_id
+                            )
                         )
-                    ])
+
+                    except:
+
+                        invite_link = None
+
+                    if invite_link:
+
+                        keyboard.append([
+                            InlineKeyboardButton(
+                                text=(
+                                    f"📢 "
+                                    f"{group.title}"
+                                ),
+                                url=invite_link,
+                            )
+                        ])
 
                 keyboard.append([
                     InlineKeyboardButton(
@@ -114,10 +136,10 @@ async def subscription_checker_loop(
                     ),
                 )
 
+                await asyncio.sleep(0.2)
+
             except:
                 pass
-
-        import asyncio
 
         await asyncio.sleep(
             60 * 60

@@ -12,6 +12,7 @@ from aiogram.types import (
     BotCommandScopeAllPrivateChats,
     BotCommandScopeChat,
 )
+
 from app.services.subscription_checker import (
     subscription_checker_loop,
 )
